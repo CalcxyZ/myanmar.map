@@ -206,34 +206,6 @@ export default function App() {
       {/* Main Container Wrapper */}
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* ================= HEADER HERO SECTION ================= */}
-        <header 
-          id="app-header-hero"
-          className={`p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all duration-300 ${currentTheme.cardBg} ${currentTheme.rounded}`}
-        >
-          <div>
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full ${currentTheme.accentBg} ${currentTheme.accentColor} flex items-center gap-1`}>
-                <Sparkles className="w-3.5 h-3.5 animate-spin" /> Myanmar Cultural map
-              </span>
-            </div>
-            
-            <h1 className={`text-3xl sm:text-4xl font-extrabold ${currentTheme.primaryText} mt-2 flex items-center gap-2`}>
-              ပြည်ထောင်စုမြန်မာနိုင်ငံတော်
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1 max-w-xl">
-              Understand traditional greetings, taste iconic regional dishes, discover famous golden pagodas, limestone caves, and design your customized travel adventure paths across Myanmar.
-            </p>
-          </div>
-
-          <div className="flex flex-col items-start md:items-end gap-1 text-right">
-            <div className="text-xs bg-neutral-800 text-white px-3 py-1 rounded-lg font-mono flex items-center gap-1.5 self-start md:self-end">
-              <Compass className="w-3.5 h-3.5 text-amber-400 rotate-12" /> Explore Mode Active
-            </div>
-            <span className="text-[10px] text-neutral-400 font-mono">Current Local Time: 12:32 AM (GMT+6:30)</span>
-          </div>
-        </header>
-
         {/* ================= SEARCH & ADVANCED FILTERS ================= */}
         <section 
           id="search-filter-section"
