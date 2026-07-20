@@ -1,0 +1,6 @@
+{
+  "name": "Myanmar Map Explorer",
+  "description": "Interactive cultural map and custom travel path planner for Myanmar's states and regions with cute customization themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

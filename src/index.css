@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@layer utilities {
+  /* Keyframe animation for scrolling dashed travel path on map */
+  @keyframes dash {
+    to {
+      stroke-dashoffset: -100;
+    }
+  }
+
+  /* Soft fade-in animation for active elements */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes microBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-1.5px);
+    }
+  }
+
+  .animate-micro-bounce {
+    animation: microBounce 1.2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  @keyframes pikaPulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 1.5px #f59e0b) drop-shadow(0 0 4px #fbbf24) drop-shadow(0 0 8px #fef08a);
+    }
+    50% {
+      filter: drop-shadow(0 0 3px #fbbf24) drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 15px #fef08a);
+    }
+  }
+
+  .animate-pika-pulse {
+    animation: pikaPulse 1.4s ease-in-out infinite;
+  }
+}
+
+/* Custom fonts matching active themes */
+.font-sans {
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.font-serif {
+  font-family: 'Lora', Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+/* Custom scrollbar layouts */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
