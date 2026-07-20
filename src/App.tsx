@@ -20,7 +20,6 @@ import {
   Compass, 
   Filter, 
   Heart, 
-  BookOpen, 
   Star,
   Map,
   Layers,
@@ -351,43 +350,6 @@ export default function App() {
             </div>
           </section>
         )}
-
-        {/* ================= CULTURAL MANUAL ENCYCLOPEDIA ================= */}
-        <section 
-          id="cultural-encyclopedia" 
-          className={`p-6 bg-white/40 border border-neutral-200/40 ${currentTheme.rounded} flex flex-col md:flex-row justify-between items-center gap-4`}
-        >
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${currentTheme.accentBg} ${currentTheme.accentColor}`}>
-              <BookOpen className="w-6 h-6 animate-pulse" />
-            </div>
-            <div>
-              <h4 className={`text-sm font-extrabold text-neutral-800`}>Burmese Cultural Reference Manual</h4>
-              <p className="text-xs text-neutral-500 leading-relaxed">
-                Myanmar possesses a multi-layered history spanning the early Pyu cities, Pagan Dynasty golden empires, Konbaung courts, and complex ethnic confederacies. Each division carries a distinct landscape character.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <a 
-              href="https://en.wikipedia.org/wiki/Myanmar" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="text-xs px-4 py-2 border border-neutral-300 bg-white hover:bg-neutral-50 font-semibold rounded-lg text-neutral-700 transition-all flex items-center gap-1"
-            >
-              Wikipedia Info &rarr;
-            </a>
-          </div>
-        </section>
-
-        {/* ================= FOOTER CREDITS ================= */}
-        <footer id="app-footer" className="text-center py-6 text-neutral-400 text-[11px] font-mono whitespace-nowrap">
-          <p>© 2026 Union of Myanmar Interactive Map Explorer. Built with Customizable Aesthetics.</p>
-          <div id="footer-emojis" className="flex justify-center gap-2 mt-1.5 opacity-60">
-            <span>🌸</span><span>📜</span><span>👑</span><span>🍃</span>
-          </div>
-        </footer>
 
       </div>
     </div>
