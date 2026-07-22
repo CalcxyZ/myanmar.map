@@ -760,41 +760,6 @@ export default function MyanmarMap({
         </div>
 
         <div id="view-mode-buttons" className="flex items-center gap-2 flex-wrap">
-          {/* Categories top-bar filter for Detailed Map */}
-          {isDetailedView && onSelectCategory && (
-            <div id="detailed-category-chips" className="flex flex-wrap gap-1 items-center bg-neutral-100/10 p-1 rounded-xl">
-              {[
-                { id: 'all', label: 'All Sights', emoji: '🗺️' },
-                { id: 'sacred', label: 'Sacred', emoji: '🕌' },
-                { id: 'nature', label: 'Nature', emoji: '🌳' },
-                { id: 'beach', label: 'Beach', emoji: '🏖️' },
-                { id: 'historical', label: 'History', emoji: '🏰' },
-                { id: 'cultural', label: 'Culture', emoji: '🎨' },
-                { id: 'hotel', label: 'Hotels', emoji: '🏨' }
-              ].map((cat) => {
-                const isActive = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => onSelectCategory(cat.id)}
-                    className={`px-2 py-1 md:px-2.5 rounded-lg text-[10px] md:text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                      isActive
-                        ? currentTheme.id === 'vibrant' ? 'bg-[#FF8E72] text-white shadow-sm' :
-                          currentTheme.id === 'cute' ? 'bg-pink-500 text-white' :
-                          currentTheme.id === 'classic' ? 'bg-amber-800 text-white font-medium' :
-                          currentTheme.id === 'royal' ? 'bg-red-800 text-white' :
-                          'bg-emerald-800 text-white'
-                        : 'bg-white text-neutral-600 border border-neutral-200/80 hover:bg-neutral-50'
-                    }`}
-                  >
-                    <span>{cat.emoji}</span>
-                    <span className="hidden md:inline">{cat.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {!isDetailedView && selectedRegion && (
             <button
               id="zoom-btn-details"
@@ -1593,7 +1558,7 @@ export default function MyanmarMap({
               <form 
                 onSubmit={handleSubmitCustom}
                 id="add-custom-landmark-form" 
-                className="p-4 bg-white rounded-xl border border-neutral-200 shadow-sm flex-1 flex flex-col justify-between"
+                className="p-4 bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm flex-1 flex flex-col justify-between"
               >
                 <div className="space-y-3 overflow-y-auto max-h-[460px] pr-1">
                   <div className="flex items-center justify-between">
@@ -1745,9 +1710,9 @@ export default function MyanmarMap({
               </form>
             ) : (focusedClusterId || selectedLandmark) ? (
               /* ================= DETAILED LANDMARK / CLUSTER CARD ================= */
-              <div id="landmark-detail-sheet" className="flex-1 flex flex-col gap-3 min-h-0 h-full">
+              <div id="landmark-detail-sheet" className="flex-1 flex flex-col gap-1.5 min-h-0 h-full">
                 {/* TOP CARD: Landmark details or Cluster overview */}
-                <div className="flex-none bg-white rounded-xl border border-neutral-200 shadow-sm p-4 flex flex-col">
+                <div className="flex-none bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm p-3 flex flex-col">
                   {selectedLandmark ? (
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -1785,10 +1750,6 @@ export default function MyanmarMap({
                         </div>
                       )}
                       
-                      <p className="text-xs text-neutral-600 leading-relaxed mb-4">
-                        {selectedLandmark.description}
-                      </p>
-
                       {/* External Map Buttons */}
                       {(selectedLandmark.googleMapsUrl || (selectedLandmark.lat !== undefined && selectedLandmark.lng !== undefined)) && (
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -1841,7 +1802,7 @@ export default function MyanmarMap({
                   )}
 
                   {/* Actions for top card */}
-                  <div className="mt-4 pt-4 border-t border-neutral-100 flex flex-col gap-2">
+                  <div className="mt-3 pt-3 border-t border-neutral-100 flex flex-col gap-2">
                     {selectedLandmark && selectedLandmark.id.startsWith('custom-') && onDeleteCustomLandmark && (
                       <button
                         type="button"
@@ -1876,7 +1837,7 @@ export default function MyanmarMap({
                 </div>
 
                 {/* BOTTOM CARD: Cluster spots list OR default "More Hotels" list */}
-                <div className="flex-1 min-h-0 bg-white rounded-xl border border-neutral-200 shadow-sm p-4 flex flex-col overflow-y-auto">
+                <div className="flex-1 min-h-0 bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm p-5 flex flex-col overflow-y-auto">
                   {selectedRegion?.id === 'shan' && focusedCity ? (
                     /* Show spots in the active focused city */
                     <div>
@@ -2072,7 +2033,7 @@ export default function MyanmarMap({
               </div>
             ) : (
               /* ================= NO LANDMARK SELECTED SLATE ================= */
-              <div id="no-landmark-selected-slate" className="p-6 bg-white/55 rounded-xl border border-dashed border-neutral-200 flex flex-col items-center justify-center text-center h-full gap-4 justify-between">
+              <div id="no-landmark-selected-slate" className="p-6 bg-neutral-100/60 rounded-xl border border-dashed border-neutral-200 flex flex-col items-center justify-center text-center h-full gap-4 justify-between">
                 <div className="flex flex-col items-center justify-center my-auto">
                   <Compass className="w-8 h-8 text-neutral-300 mb-2 animate-[spin_10s_linear_infinite]" />
                   <h4 className="text-xs font-bold text-neutral-500 mb-1">No attraction clicked</h4>
@@ -2204,7 +2165,7 @@ export default function MyanmarMap({
             {selectedRegion ? (
               <div 
                 id="region-focus-summary" 
-                className={`p-5 rounded-2xl bg-white border border-neutral-100 shadow-sm flex flex-col justify-between ${
+                className={`p-5 rounded-2xl bg-neutral-50 border border-neutral-100 shadow-sm flex flex-col justify-between ${
                   currentTheme.id === 'cute' ? 'border-pink-100' :
                   currentTheme.id === 'classic' ? 'border-amber-200' :
                   'border-neutral-200'
