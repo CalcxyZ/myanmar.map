@@ -21,6 +21,9 @@ export interface Landmark {
   visitDuration: string;
   location?: string;
   rating?: number;
+  facebook?: string;
+  email?: string;
+  phoneNumber?: string;
 }
 
 export interface Region {
