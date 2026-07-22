@@ -747,7 +747,7 @@ export default function MyanmarMap({
             ) : (
               <>
                 <img
-                  src="/raizentravel-logo.svg"
+                  src="/raizentravel-logo.jpg"
                   alt="raizentravel.com logo"
                   className="w-8 h-8 object-contain rounded-full bg-white/80 p-0.5 shadow-sm"
                 />
