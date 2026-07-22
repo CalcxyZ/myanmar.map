@@ -746,8 +746,12 @@ export default function MyanmarMap({
               </span>
             ) : (
               <>
-                <Compass className="w-6 h-6 animate-[spin_5s_linear_infinite]" />
-                Interactive Map of Myanmar
+                <img
+                  src="/raizentravel-logo.svg"
+                  alt="raizentravel.com logo"
+                  className="w-8 h-8 object-contain rounded-full bg-white/80 p-0.5 shadow-sm"
+                />
+                Interactive Map of Myanmar by raizentravel.com
               </>
             )}
           </h2>
@@ -1750,6 +1754,52 @@ export default function MyanmarMap({
                         </div>
                       )}
                       
+                      {selectedLandmark.category !== 'hotel' && (
+                        <p className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
+                          {selectedLandmark.description}
+                        </p>
+                      )}
+
+                      {selectedLandmark.category === 'hotel' && (selectedLandmark.facebook || selectedLandmark.email || selectedLandmark.phoneNumber) && (
+                        <div className="mb-4 rounded-lg border border-red-100 bg-red-50/60 p-3 text-[11px] text-neutral-700 space-y-1.5">
+                          {selectedLandmark.facebook && (
+                            <div className="flex items-start gap-2">
+                              <span className="font-bold text-red-600 min-w-20">Facebook:</span>
+                              <a
+                                href={selectedLandmark.facebook}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-red-700 hover:underline break-all"
+                              >
+                                {selectedLandmark.facebook}
+                              </a>
+                            </div>
+                          )}
+                          {selectedLandmark.email && (
+                            <div className="flex items-start gap-2">
+                              <span className="font-bold text-red-600 min-w-20">Email:</span>
+                              <a
+                                href={'mailto:' + selectedLandmark.email}
+                                className="text-red-700 hover:underline break-all"
+                              >
+                                {selectedLandmark.email}
+                              </a>
+                            </div>
+                          )}
+                          {selectedLandmark.phoneNumber && (
+                            <div className="flex items-start gap-2">
+                              <span className="font-bold text-red-600 min-w-20">Phone:</span>
+                              <a
+                                href={'tel:' + selectedLandmark.phoneNumber.replace(/\s+/g, '')}
+                                className="text-red-700 hover:underline"
+                              >
+                                {selectedLandmark.phoneNumber}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* External Map Buttons */}
                       {(selectedLandmark.googleMapsUrl || (selectedLandmark.lat !== undefined && selectedLandmark.lng !== undefined)) && (
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -1790,7 +1840,7 @@ export default function MyanmarMap({
                         {clusters.find(c => c.id === focusedClusterId)?.locationName || 'Cluster Highlights'}
                       </h3>
                       
-                      <p className="text-xs text-neutral-600 leading-relaxed mb-4">
+                      <p className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
                         Explore all the accommodation and tourist hotspots clustered at this destination. Tap on any item below to view full details!
                       </p>
 
@@ -2188,7 +2238,7 @@ export default function MyanmarMap({
                     {selectedRegion.myanmarName}
                   </span>
 
-                  <p id="inspector-description" className="text-xs text-neutral-600 leading-relaxed mb-4">
+                  <p id="inspector-description" className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
                     {selectedRegion.description}
                   </p>
 
