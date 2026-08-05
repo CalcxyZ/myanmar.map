@@ -1059,6 +1059,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.83567491556774, 
         lng: 94.39340922577584,
+        googleMapsUrl: 'https://maps.app.goo.gl/iVoptMR3pggFXrP5A',
         description: 'A charming oceanfront boutique resort featuring breezy wooden bungalows, palm-shaded sun loungers, and warm hospitality along Ngwe Saung beach.',
         usp: 'Offers private beachfront candlelit seafood dinners right on the soft silver sand.',
         visitDuration: 'Overnight Stay'
@@ -1072,6 +1073,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.858319916986268, 
         lng: 94.38845940934068,
+         googleMapsUrl: 'https://maps.app.goo.gl/X9rkMUfVdnWpYRfs5',
         description: 'A relaxed beach resort set amidst coconut groves, featuring spacious air-conditioned rooms, a sea-facing swimming pool, and direct beach access.',
         usp: 'Conveniently situated right near the entrance path to Lover\'s Island at low tide.',
         visitDuration: 'Overnight Stay'
@@ -1085,6 +1087,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.829668978328336, 
         lng: 94.3959216246851,
+          googleMapsUrl: 'https://maps.app.goo.gl/JshoZ4LtnXfvuKp67',
         description: 'A modern beachfront hotel with stylish sea-view balconies, an outdoor infinity pool, and an open-air restaurant serving fresh catches.',
         usp: 'Features a rooftop cocktail lounge providing unobstructed 180-degree sunset ocean views.',
         visitDuration: 'Overnight Stay'
@@ -1098,6 +1101,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.842294811743592, 
         lng: 94.39278460934041,
+        googleMapsUrl: 'https://maps.app.goo.gl/HGrd5unYqYyzZMZD8',
         description: 'A tranquil beachfront resort offering tropical garden chalets, coconut-shaded grounds, and a serene atmosphere ideal for relaxation.',
         usp: 'Features lush manicured tropical gardens that stretch all the way down to the high tide mark.',
         visitDuration: 'Overnight Stay'
@@ -1111,6 +1115,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.86325757391679, 
         lng: 94.38516341119455,
+        googleMapsUrl: 'https://maps.app.goo.gl/YswCZNLtWtu5Q5Se7',
         description: 'A peaceful boutique resort featuring traditional Myanmar-style teakwood chalets, an inviting pool, and authentic local cuisine.',
         usp: 'Known for its quiet village vibe and personalized bicycle rental services for coastal exploration.',
         visitDuration: 'Overnight Stay'
@@ -1124,6 +1129,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.872882087553258, 
         lng: 94.37670418050483,
+        googleMapsUrl: 'https://maps.app.goo.gl/DmJLFa6vNnTj2DjG8',
         description: 'A premier luxury resort nestled on a vast expanse of pristine beach, featuring grand architectural villas, a world-class spa, and fine dining.',
         usp: 'Spans across 14 acres of coconut palm gardens with one of the largest beachfronts in Ngwe Saung.',
         visitDuration: 'Overnight Stay'
@@ -1137,6 +1143,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.854204743699015, 
         lng: 94.39065582283187,
+           googleMapsUrl: 'https://maps.app.goo.gl/ZGGwbRPX28Y7Uaji9',
         description: 'One of Ngwe Saung\'s top luxury resorts, famous for its magnificent infinity pool with swim-up bar, elegant oceanfront villas, and pristine beach.',
         usp: 'Renowned for hosting sunset beach fire shows and offering premium water sports activities.',
         visitDuration: 'Overnight Stay'
@@ -1150,6 +1157,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.861485335785737, 
         lng: 94.38629128235831,
+        googleMapsUrl: 'https://maps.app.goo.gl/bsvbs6rxZZtc7BQbA',
         description: 'A central, cozy hotel located close to Ngwe Saung main village market, offering clean comfortable rooms and easy access to both beach and dining.',
         usp: 'Walking distance to local seafood night stalls, fruit markets, and souvenir shops.',
         visitDuration: 'Overnight Stay'
@@ -1163,19 +1171,21 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.845612289960965, 
         lng: 94.39178531119414,
+              googleMapsUrl: 'https://maps.app.goo.gl/pia1mp9gtCBCVrP86',
         description: 'An expansive beach resort with grand colonial-style wings, a sprawling swimming pool, and direct beach walk paths.',
         usp: 'Features a spacious outdoor event pavilion and beach volleyball grounds right on the sand.',
         visitDuration: 'Overnight Stay'
       },
       {
         id: 'ngwesaung-ahinkaya',
-        name: 'Ahinkaya Hotel',
+        name: 'Ahtinkaya Hotel',
         regionId: 'ayeyarwady',
         category: 'hotel',
         rating: 4.3,
         location: 'Ngwe Saung',
         lat: 16.856007913338804, 
         lng: 94.38965582468568,
+        googleMapsUrl: 'https://maps.app.goo.gl/ZHfq8cEdabbhpfEe9',
         description: 'A cozy beach sanctuary featuring private wooden villas nestled in lush tropical greenery, offering tranquility and ocean breezes.',
         usp: 'Features peaceful private garden patios equipped with traditional Myanmar rattan hammocks.',
         visitDuration: 'Overnight Stay'
@@ -1189,6 +1199,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.869452827122064, 
         lng: 94.37944918235846,
+          googleMapsUrl: 'https://maps.app.goo.gl/T4oPLmSP516e6QU29',
         description: 'An opulent luxury beach resort featuring grand teakwood architecture, lavish oceanfront private pool villas, and lush tropical gardens.',
         usp: 'Presents majestic teakwood royal pavilion architecture inspired by ancient Burmese palace heritage.',
         visitDuration: 'Overnight Stay'
@@ -1202,6 +1213,7 @@ export const MYANMAR_REGIONS: Region[] = [
         location: 'Ngwe Saung',
         lat: 16.801134601280864, 
         lng: 94.40189995537446,
+        googleMapsUrl: 'https://maps.app.goo.gl/m9Mp7x2BEbfR8cbp9',
         description: 'A modern beachfront hotel with comfortable air-conditioned rooms, a sea-facing outdoor pool, and attentive hospitality.',
         usp: 'Offers excellent value beachfront accommodations with direct access to water sport rentals.',
         visitDuration: 'Overnight Stay'
