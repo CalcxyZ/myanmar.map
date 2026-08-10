@@ -18,6 +18,7 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
 }) => {
   const [isLeafletLoaded, setIsLeafletLoaded] = useState(false);
   const [loadError, setFormError] = useState<string | null>(null);
+  const [currentZoom, setCurrentZoom] = useState<number>(zoom);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markerGroupRef = useRef<any>(null);
@@ -100,6 +101,11 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
 
       mapInstanceRef.current = map;
       markerGroupRef.current = markerGroup;
+
+      // Track zoom changes dynamically
+      map.on('zoomend', () => {
+        setCurrentZoom(map.getZoom());
+      });
     } catch (err) {
       console.error('Error initializing Leaflet map:', err);
     }
@@ -144,44 +150,94 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     markerGroupRef.current.clearLayers();
     markerMapRef.current.clear();
 
-    // Custom marker icons to prevent assets missing in bundler
-    const defaultHotelIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    const selectedHotelIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+    // Custom cute hotel marker icons
+    const getCategoryEmoji = (category: string) => {
+      switch (category) {
+        case 'hotel': return '🏨';
+        case 'beach': return '🏖️';
+        case 'nature': return '🌲';
+        case 'sacred': return '🛕';
+        case 'historical': return '🏰';
+        case 'cultural': return '🎭';
+        default: return '🏨';
+      }
+    };
 
     markers.forEach((marker) => {
       if (marker.lat === undefined || marker.lng === undefined) return;
 
       const isSelected = selectedMarker?.id === marker.id;
-      const icon = isSelected ? selectedHotelIcon : defaultHotelIcon;
+      const emoji = getCategoryEmoji(marker.category);
+      const ratingText = marker.rating ? `★ ${marker.rating}` : '';
+
+      // Determine marker presentation mode based on zoom level
+      // Zoom <= 15 (< 16): Compact icon pin badge (shows name on hover)
+      // Zoom >= 16: Icon + Hotel Name
+      let customIconHtml = '';
+
+      if (currentZoom < 16 && !isSelected) {
+        // Compact Zoomed-Out Mode: Cute round icon pin badge, reveals name on hover
+        customIconHtml = `
+          <div class="relative group cursor-pointer select-none transition-all duration-300 transform -translate-x-1/2 -translate-y-full" style="pointer-events: auto;">
+            <div class="relative flex items-center justify-center">
+              <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md ring-2 ring-white hover:scale-110 hover:from-amber-500 hover:to-orange-500 transition-all duration-200">
+                <span class="text-sm leading-none filter drop-shadow-sm">${emoji}</span>
+                <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-[150px] group-hover:opacity-100 font-extrabold text-xs whitespace-nowrap tracking-tight font-sans drop-shadow-sm transition-all duration-300">${marker.name}</span>
+              </div>
+            </div>
+            <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-600 mx-auto -mt-0.5 filter drop-shadow-sm"></div>
+          </div>
+        `;
+      } else {
+        // Expanded Mode (Zoom >= 16 or Selected): Icon + Hotel Name
+        customIconHtml = `
+          <div class="relative group cursor-pointer select-none transition-all duration-300 transform -translate-x-1/2 -translate-y-full" style="pointer-events: auto;">
+            ${isSelected ? '<div class="absolute -inset-1.5 rounded-full bg-amber-400/70 blur-md animate-pulse"></div>' : ''}
+            <div class="relative flex items-center justify-center">
+              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                isSelected 
+                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-xl ring-2 ring-white scale-110 z-50' 
+                  : 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-lg ring-2 ring-white/90 hover:scale-105 hover:from-amber-500 hover:to-orange-500'
+              } transition-all duration-200">
+                <span class="text-base leading-none filter drop-shadow-sm">${emoji}</span>
+                <span class="font-extrabold text-xs whitespace-nowrap tracking-tight font-sans drop-shadow-sm">${marker.name}</span>
+              </div>
+            </div>
+            <div class="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent ${
+              isSelected ? 'border-t-[9px] border-t-amber-600' : 'border-t-[8px] border-t-amber-600'
+            } mx-auto -mt-0.5 filter drop-shadow-sm"></div>
+          </div>
+        `;
+      }
+
+      const icon = L.divIcon({
+        className: '!bg-transparent !border-0',
+        html: customIconHtml,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+        popupAnchor: [0, -32],
+      });
 
       const mapMarker = L.marker([marker.lat, marker.lng], { icon })
         .addTo(markerGroupRef.current);
 
-      // Create a gorgeous custom HTML tooltip for instant hover feedback
+      // Create a gorgeous custom HTML tooltip for detailed hover feedback
       mapMarker.bindTooltip(
-        `<div class="p-1.5 font-sans">
-          <div class="font-bold text-xs text-neutral-800">${marker.name}</div>
-          <div class="text-[10px] text-amber-600 font-medium capitalize mt-0.5">🏨 Shan State Hotel</div>
+        `<div class="p-2 font-sans max-w-[200px]">
+          <div class="font-bold text-sm text-neutral-800 flex items-center gap-1">
+            <span>${emoji}</span>
+            <span>${marker.name}</span>
+          </div>
+          <div class="text-xs text-amber-600 font-semibold capitalize mt-1 flex items-center justify-between">
+            <span>📍 ${marker.location || 'Ayeyarwady'}</span>
+            ${marker.rating ? `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">★ ${marker.rating}</span>` : ''}
+          </div>
+          ${marker.usp ? `<div class="text-[11px] text-neutral-600 mt-1 line-clamp-2">${marker.usp}</div>` : ''}
         </div>`,
         {
           direction: 'top',
-          offset: [0, -10],
-          opacity: 0.95,
+          offset: [0, -32],
+          opacity: 0.98,
         }
       );
 
@@ -205,7 +261,7 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
         }, 100);
       }
     }
-  }, [markers, selectedMarker, isLeafletLoaded]);
+  }, [markers, selectedMarker, isLeafletLoaded, currentZoom]);
 
   // React to selecting marker outside (sidebar list selection)
   useEffect(() => {
