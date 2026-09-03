@@ -173,10 +173,20 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
         .addTo(markerGroupRef.current);
 
       // Create a gorgeous custom HTML tooltip for instant hover feedback
+      const categoryEmoji: Record<string, string> = {
+        hotel: '🏨',
+        sacred: '🙏',
+        nature: '🌿',
+        beach: '🏖️',
+        historical: '🏛️',
+        cultural: '🎎',
+      };
+      const emoji = categoryEmoji[marker.category] || '📍';
+      const categoryLabel = marker.category.charAt(0).toUpperCase() + marker.category.slice(1);
       mapMarker.bindTooltip(
         `<div class="p-1.5 font-sans">
           <div class="font-bold text-xs text-neutral-800">${marker.name}</div>
-          <div class="text-[10px] text-amber-600 font-medium capitalize mt-0.5">🏨 Shan State Hotel</div>
+          <div class="text-[10px] text-amber-600 font-medium capitalize mt-0.5">${emoji} ${categoryLabel}${marker.location ? ` · ${marker.location}` : ''}</div>
         </div>`,
         {
           direction: 'top',
