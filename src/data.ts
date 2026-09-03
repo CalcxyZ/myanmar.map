@@ -1461,7 +1461,7 @@ export const MYANMAR_REGIONS: Region[] = [
         lat: 16.8365,
         lng: 96.1735,
         visitDuration: 'Overnight Stay',
-        location: 'Thingangyun'
+        location: 'Yangon'
       },
       {
         id: 'yangon-esperado-lakeview',
@@ -1475,7 +1475,7 @@ export const MYANMAR_REGIONS: Region[] = [
         lat: 16.7862,
         lng: 96.1668,
         visitDuration: 'Overnight Stay',
-        location: 'Kandawgyi Lake'
+        location: 'Yangon'
       },
       {
         id: 'yangon-zealax',
