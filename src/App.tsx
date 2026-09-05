@@ -20,7 +20,6 @@ import {
   Compass, 
   Filter, 
   Heart, 
-  BookOpen, 
   Star,
   Map,
   Layers,
@@ -206,34 +205,6 @@ export default function App() {
       {/* Main Container Wrapper */}
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* ================= HEADER HERO SECTION ================= */}
-        <header 
-          id="app-header-hero"
-          className={`p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all duration-300 ${currentTheme.cardBg} ${currentTheme.rounded}`}
-        >
-          <div>
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full ${currentTheme.accentBg} ${currentTheme.accentColor} flex items-center gap-1`}>
-                <Sparkles className="w-3.5 h-3.5 animate-spin" /> Myanmar Cultural map
-              </span>
-            </div>
-            
-            <h1 className={`text-3xl sm:text-4xl font-extrabold ${currentTheme.primaryText} mt-2 flex items-center gap-2`}>
-              ပြည်ထောင်စုမြန်မာနိုင်ငံတော်
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1 max-w-xl">
-              Understand traditional greetings, taste iconic regional dishes, discover famous golden pagodas, limestone caves, and design your customized travel adventure paths across Myanmar.
-            </p>
-          </div>
-
-          <div className="flex flex-col items-start md:items-end gap-1 text-right">
-            <div className="text-xs bg-neutral-800 text-white px-3 py-1 rounded-lg font-mono flex items-center gap-1.5 self-start md:self-end">
-              <Compass className="w-3.5 h-3.5 text-amber-400 rotate-12" /> Explore Mode Active
-            </div>
-            <span className="text-[10px] text-neutral-400 font-mono">Current Local Time: 12:32 AM (GMT+6:30)</span>
-          </div>
-        </header>
-
         {/* ================= SEARCH & ADVANCED FILTERS ================= */}
         <section 
           id="search-filter-section"
@@ -379,43 +350,6 @@ export default function App() {
             </div>
           </section>
         )}
-
-        {/* ================= CULTURAL MANUAL ENCYCLOPEDIA ================= */}
-        <section 
-          id="cultural-encyclopedia" 
-          className={`p-6 bg-white/40 border border-neutral-200/40 ${currentTheme.rounded} flex flex-col md:flex-row justify-between items-center gap-4`}
-        >
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${currentTheme.accentBg} ${currentTheme.accentColor}`}>
-              <BookOpen className="w-6 h-6 animate-pulse" />
-            </div>
-            <div>
-              <h4 className={`text-sm font-extrabold text-neutral-800`}>Burmese Cultural Reference Manual</h4>
-              <p className="text-xs text-neutral-500 leading-relaxed">
-                Myanmar possesses a multi-layered history spanning the early Pyu cities, Pagan Dynasty golden empires, Konbaung courts, and complex ethnic confederacies. Each division carries a distinct landscape character.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <a 
-              href="https://en.wikipedia.org/wiki/Myanmar" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="text-xs px-4 py-2 border border-neutral-300 bg-white hover:bg-neutral-50 font-semibold rounded-lg text-neutral-700 transition-all flex items-center gap-1"
-            >
-              Wikipedia Info &rarr;
-            </a>
-          </div>
-        </section>
-
-        {/* ================= FOOTER CREDITS ================= */}
-        <footer id="app-footer" className="text-center py-6 text-neutral-400 text-[11px] font-mono whitespace-nowrap">
-          <p>© 2026 Union of Myanmar Interactive Map Explorer. Built with Customizable Aesthetics.</p>
-          <div id="footer-emojis" className="flex justify-center gap-2 mt-1.5 opacity-60">
-            <span>🌸</span><span>📜</span><span>👑</span><span>🍃</span>
-          </div>
-        </footer>
 
       </div>
     </div>

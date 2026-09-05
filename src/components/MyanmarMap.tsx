@@ -841,8 +841,12 @@ export default function MyanmarMap({
               </span>
             ) : (
               <>
-                <Compass className="w-6 h-6 animate-[spin_5s_linear_infinite]" />
-                Interactive Map of Myanmar
+                <img
+                  src="/raizentravel-logo.jpg"
+                  alt="raizentravel.com logo"
+                  className="w-8 h-8 object-contain rounded-full bg-white/80 p-0.5 shadow-sm"
+                />
+                Interactive Map of Myanmar by raizentravel.com
               </>
             )}
           </h2>
@@ -1234,6 +1238,10 @@ export default function MyanmarMap({
                           <g transform={`translate(${offsetX}, ${offsetY}) scale(${(width * S) / 100}, ${(height * S) / 100})`}>
                             {cityHubs.map((city) => {
                               const isFocused = focusedCity === city.name;
+                              const centerX = offsetX + (city.center.x / 100) * (width * S);
+                              const centerY = offsetY + (city.center.y / 100) * (height * S);
+                              const hexPoints = generateSvgHexagonPoints(centerX, centerY, 13.5);
+
                               return (
                                 <g 
                                   key={city.name} 
@@ -1245,9 +1253,9 @@ export default function MyanmarMap({
                                 >
                                   {/* Multi-colored glowing aura in hexagon shape when selected or hovered */}
                                   <polygon
-                                    points={city.points}
+                                    points={hexPoints}
                                     style={{
-                                      transformOrigin: `${city.center.x}px ${city.center.y}px`,
+                                      transformOrigin: `${centerX.toFixed(2)}px ${centerY.toFixed(2)}px`,
                                     }}
                                     fill="url(#hexGlowGrad)"
                                     filter="url(#hexGlowFilter)"
@@ -1259,13 +1267,13 @@ export default function MyanmarMap({
                                   />
                                   {/* Sharp outer glowing border ring */}
                                   <polygon
-                                    points={city.points}
+                                    points={hexPoints}
                                     style={{
-                                      transformOrigin: `${city.center.x}px ${city.center.y}px`,
+                                      transformOrigin: `${centerX.toFixed(2)}px ${centerY.toFixed(2)}px`,
                                     }}
                                     fill="none"
                                     stroke="#fbbf24"
-                                    strokeWidth="0.4"
+                                    strokeWidth="0.8"
                                     className={`transition-all duration-300 pointer-events-none origin-center ${
                                       isFocused 
                                         ? 'scale-115 opacity-100' 
@@ -1273,29 +1281,41 @@ export default function MyanmarMap({
                                     }`}
                                   />
                                   <polygon
-                                    points={city.points}
+                                    points={hexPoints}
                                     className={`transition-all duration-300 ${
                                       isFocused 
-                                        ? 'fill-[#F59E0B]/85 stroke-white stroke-[0.8] [filter:drop-shadow(0_0_6px_rgba(255,255,255,1.0))]' 
-                                        : 'fill-[#F59E0B]/30 group-hover:fill-[#F59E0B]/60 stroke-white/60 group-hover:stroke-white group-hover:stroke-[0.6] [filter:drop-shadow(0_0_2px_rgba(255,255,255,0.4))] group-hover:[filter:drop-shadow(0_0_5px_rgba(255,255,255,0.95))]'
+                                        ? 'fill-[#F59E0B]/85 stroke-white stroke-[1.2] [filter:drop-shadow(0_0_6px_rgba(255,255,255,1.0))]' 
+                                        : 'fill-[#F59E0B]/30 group-hover:fill-[#F59E0B]/60 stroke-white/60 group-hover:stroke-white group-hover:stroke-[0.8] [filter:drop-shadow(0_0_2px_rgba(255,255,255,0.4))] group-hover:[filter:drop-shadow(0_0_5px_rgba(255,255,255,0.95))]'
                                     }`}
                                   />
+                                  {/* Icon inside the polygon */}
+                                  <text
+                                    x={centerX}
+                                    y={centerY - 2.2}
+                                    style={{ fontSize: '5.5px' }}
+                                    className="select-none pointer-events-none transition-all duration-300 origin-center"
+                                    textAnchor="middle"
+                                    dominantBaseline="central"
+                                  >
+                                    {city.icon}
+                                  </text>
                                   {/* Label inside the polygon */}
                                   <text
-                                    x={city.center.x + city.labelOffset.x}
-                                    y={city.center.y + city.labelOffset.y}
+                                    x={centerX}
+                                    y={centerY + 3.8}
                                     className={`font-sans font-extrabold select-none transition-all duration-300 pointer-events-none ${
-                                      isFocused ? 'fill-white text-[1.6px] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]' : 'fill-white/90 group-hover:fill-white text-[1.4px] [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]'
+                                      isFocused ? 'fill-white text-[3.2px] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]' : 'fill-white/90 group-hover:fill-white text-[2.8px] [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]'
                                     }`}
                                     textAnchor="middle"
+                                    dominantBaseline="central"
                                   >
                                     {city.name}
                                   </text>
                                   {/* Small floating bounce sparkle star when selected or hovered */}
                                   <text
-                                    x={city.center.x + city.starOffset.x}
-                                    y={city.center.y + city.starOffset.y}
-                                    style={{ fontSize: '1.8px' }}
+                                    x={centerX + 8.0}
+                                    y={centerY - 8.0}
+                                    style={{ fontSize: '4.5px' }}
                                     className={`select-none pointer-events-none transition-all duration-300 origin-center ${
                                       isFocused 
                                         ? 'opacity-100 scale-125 animate-micro-bounce' 
@@ -1311,7 +1331,7 @@ export default function MyanmarMap({
                         )}
 
                         {/* Connector lines for expanded cluster pins (stellar ray style, thin and shining bright like a star) */}
-                        {connectorLines.map(line => {
+                        {!REGION_CITY_HEXAGONS[selectedRegion.id] && connectorLines.map(line => {
                           const pX = offsetX + (line.endX / 100) * (width * S);
                           const pY = offsetY + (line.endY / 100) * (height * S);
                           const oX = offsetX + (line.startX / 100) * (width * S);
@@ -1359,7 +1379,8 @@ export default function MyanmarMap({
                       </svg>
 
                       {/* Absolute HTML Landmark Pin overlay to ensure constant, crisp, and compact pin size */}
-                      <div className="absolute inset-0 pointer-events-none z-30">
+                      {!REGION_CITY_HEXAGONS[selectedRegion.id] && (
+                        <div className="absolute inset-0 pointer-events-none z-30">
                         {finalPinsToRender.map(({ landmark, clusterId }) => {
                           const categoryStyle = getCategoryTheme(landmark.category);
                           const isSelected = selectedLandmark?.id === landmark.id;
@@ -1608,7 +1629,8 @@ export default function MyanmarMap({
                           </div>
                         )}
                       </div>
-                    </div>
+                    )}
+                  </div>
                   </motion.div>
                 </>
               );
@@ -1814,6 +1836,52 @@ export default function MyanmarMap({
                         </div>
                       )}
                       
+                      {selectedLandmark.category !== 'hotel' && (
+                        <p className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
+                          {selectedLandmark.description}
+                        </p>
+                      )}
+
+                      {selectedLandmark.category === 'hotel' && (selectedLandmark.facebook || selectedLandmark.email || selectedLandmark.phoneNumber) && (
+                        <div className="mb-4 rounded-lg border border-red-100 bg-red-50/60 p-3 text-[11px] text-neutral-700 space-y-1.5">
+                          {selectedLandmark.facebook && (
+                            <div className="flex items-start gap-2">
+                              <span className="font-bold text-red-600 min-w-20">Facebook:</span>
+                              <a
+                                href={selectedLandmark.facebook}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-red-700 hover:underline break-all"
+                              >
+                                {selectedLandmark.facebook}
+                              </a>
+                            </div>
+                          )}
+                          {selectedLandmark.email && (
+                            <div className="flex items-start gap-2">
+                              <span className="font-bold text-red-600 min-w-20">Email:</span>
+                              <a
+                                href={'mailto:' + selectedLandmark.email}
+                                className="text-red-700 hover:underline break-all"
+                              >
+                                {selectedLandmark.email}
+                              </a>
+                            </div>
+                          )}
+                          {selectedLandmark.phoneNumber && (
+                            <div className="flex items-start gap-2">
+                              <span className="font-bold text-red-600 min-w-20">Phone:</span>
+                              <a
+                                href={'tel:' + selectedLandmark.phoneNumber.replace(/\s+/g, '')}
+                                className="text-red-700 hover:underline"
+                              >
+                                {selectedLandmark.phoneNumber}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* External Map Buttons */}
                       {(selectedLandmark.googleMapsUrl || (selectedLandmark.lat !== undefined && selectedLandmark.lng !== undefined)) && (
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -1854,7 +1922,7 @@ export default function MyanmarMap({
                         {clusters.find(c => c.id === focusedClusterId)?.locationName || 'Cluster Highlights'}
                       </h3>
                       
-                      <p className="text-xs text-neutral-600 leading-relaxed mb-4">
+                      <p className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
                         Explore all the accommodation and tourist hotspots clustered at this destination. Tap on any item below to view full details!
                       </p>
 
@@ -2249,7 +2317,7 @@ export default function MyanmarMap({
                     {selectedRegion.myanmarName}
                   </span>
 
-                  <p id="inspector-description" className="text-xs text-neutral-600 leading-relaxed mb-4">
+                  <p id="inspector-description" className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
                     {selectedRegion.description}
                   </p>
 
