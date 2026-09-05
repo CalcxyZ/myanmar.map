@@ -166,10 +166,10 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       switch (category) {
         case 'hotel': return '🏨';
         case 'beach': return '🏖️';
-        case 'nature': return '🌲';
-        case 'sacred': return '🛕';
-        case 'historical': return '🏰';
-        case 'cultural': return '🎭';
+        case 'nature': return '🌿';
+        case 'sacred': return '🙏';
+        case 'historical': return '🏛️';
+        case 'cultural': return '🎎';   
         default: return '🏨';
       }
     };
@@ -178,7 +178,7 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       if (marker.lat === undefined || marker.lng === undefined) return;
 
       const isSelected = selectedMarker?.id === marker.id;
-      const emoji = getCategoryEmoji(marker.category);
+      const emoji = getCategoryEmoji(marker.category)||'📍';
       const ratingText = marker.rating ? `★ ${marker.rating}` : '';
 
       // Determine marker presentation mode based on zoom level
@@ -232,16 +232,8 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       const mapMarker = L.marker([marker.lat, marker.lng], { icon })
         .addTo(markerGroupRef.current);
 
-      // Create a gorgeous custom HTML tooltip for instant hover feedback
-      const categoryEmoji: Record<string, string> = {
-  hotel: '🏨',
-  sacred: '🙏',
-  nature: '🌿',
-  beach: '🏖️',
-  historical: '🏛️',
-  cultural: '🎎',
-};
-const emoji = categoryEmoji[marker.category] || '📍';
+     
+
       const categoryLabel = marker.category.charAt(0).toUpperCase() + marker.category.slice(1);
       mapMarker.bindTooltip(
         `<div class="p-1.5 font-sans">
