@@ -232,18 +232,21 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       const mapMarker = L.marker([marker.lat, marker.lng], { icon })
         .addTo(markerGroupRef.current);
 
-      // Create a gorgeous custom HTML tooltip for detailed hover feedback
+      // Create a gorgeous custom HTML tooltip for instant hover feedback
+      const categoryEmoji: Record<string, string> = {
+        hotel: '🏨',
+        sacred: '🙏',
+        nature: '🌿',
+        beach: '🏖️',
+        historical: '🏛️',
+        cultural: '🎎',
+      };
+      const emoji = categoryEmoji[marker.category] || '📍';
+      const categoryLabel = marker.category.charAt(0).toUpperCase() + marker.category.slice(1);
       mapMarker.bindTooltip(
-        `<div class="p-2 font-sans max-w-[200px]">
-          <div class="font-bold text-sm text-neutral-800 flex items-center gap-1">
-            <span>${emoji}</span>
-            <span>${marker.name}</span>
-          </div>
-          <div class="text-xs text-amber-600 font-semibold capitalize mt-1 flex items-center justify-between">
-            <span>📍 ${marker.location || 'Ayeyarwady'}</span>
-            ${marker.rating ? `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">★ ${marker.rating}</span>` : ''}
-          </div>
-          ${marker.usp ? `<div class="text-[11px] text-neutral-600 mt-1 line-clamp-2">${marker.usp}</div>` : ''}
+        `<div class="p-1.5 font-sans">
+          <div class="font-bold text-xs text-neutral-800">${marker.name}</div>
+          <div class="text-[10px] text-amber-600 font-medium capitalize mt-0.5">${emoji} ${categoryLabel}${marker.location ? ` · ${marker.location}` : ''}</div>
         </div>`,
         {
           direction: 'top',

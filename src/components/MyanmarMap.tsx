@@ -45,103 +45,96 @@ interface MyanmarMapProps {
   regions?: Region[];
 }
 
-/**
- * Helper to generate a 6-point SVG hexagon centered at (cx, cy) with radius r.
- * Coordinates cx and cy are percentages (0 to 100) within the region's SVG bounding box.
- */
-export function generateSvgHexagonPoints(cx: number, cy: number, r: number = 13.5) {
-  const dx1 = r;
-  const dx2 = r / 2;
-  const dy = r * 0.866025;
-  return [
-    `${(cx - dx1).toFixed(2)},${cy.toFixed(2)}`,
-    `${(cx - dx2).toFixed(2)},${(cy - dy).toFixed(2)}`,
-    `${(cx + dx2).toFixed(2)},${(cy - dy).toFixed(2)}`,
-    `${(cx + dx1).toFixed(2)},${cy.toFixed(2)}`,
-    `${(cx + dx2).toFixed(2)},${(cy + dy).toFixed(2)}`,
-    `${(cx - dx2).toFixed(2)},${(cy + dy).toFixed(2)}`,
-  ].join(' ');
+// A "City Hub" is a clickable hexagon zone on a region's map that, once clicked,
+// swaps the abstract SVG map for a real embedded OpenStreetMap of that city/town,
+// showing only the landmarks (hotels, sights, etc.) that belong to it.
+interface CityHub {
+  name: string;
+  points: string; // SVG polygon points in the 0-100 local coordinate space
+  center: { x: number; y: number };
+  labelOffset: { x: number; y: number };
+  starOffset: { x: number; y: number };
+  lat: number;
+  lng: number;
+  zoom: number;
+  match: (landmark: Landmark) => boolean;
 }
 
-export function getHexagonData(name: string, cx: number, cy: number, r: number = 6.0, icon: string = '📍') {
-  const dx1 = r;
-  const dx2 = r / 2;
-  const dy = r * 0.866;
-  const p1 = `${(cx - dx1).toFixed(1)},${cy.toFixed(1)}`;
-  const p2 = `${(cx - dx2).toFixed(1)},${(cy - dy).toFixed(1)}`;
-  const p3 = `${(cx + dx2).toFixed(1)},${(cy - dy).toFixed(1)}`;
-  const p4 = `${(cx + dx1).toFixed(1)},${cy.toFixed(1)}`;
-  const p5 = `${(cx + dx2).toFixed(1)},${(cy + dy).toFixed(1)}`;
-  const p6 = `${(cx - dx2).toFixed(1)},${(cy + dy).toFixed(1)}`;
-  return {
-    name,
-    icon,
-    points: `${p1} ${p2} ${p3} ${p4} ${p5} ${p6}`,
-    center: { x: cx, y: cy },
-    labelOffset: { x: 0, y: 0.5 },
-    starOffset: { x: dx2, y: -dy }
-  };
-}
-
-/**
- * City Hexagons grouped by Region ID.
- * Coordinates (cx, cy) range from 0 to 100 relative to the region's shape bounds:
- *  - cx: 0 = far left, 50 = center, 100 = far right
- *  - cy: 0 = top, 50 = middle, 100 = bottom
- */
-export const REGION_CITY_HEXAGONS: Record<string, ReturnType<typeof getHexagonData>[]> = {
-  // Shan State
+// Per-region city hub definitions. Any region present here gets the Shan-State-style
+// "pick a city, then explore an interactive OpenStreetMap" experience.
+const REGION_CITY_HUBS: Record<string, CityHub[]> = {
   shan: [
-    getHexagonData('Kalaw', 8.0, 68.0, 6.0, '🌲'),
-    getHexagonData('Inle Lake', 22.0, 68.0, 6.0, '⛵'),
-    getHexagonData('Taunggyi', 36.0, 55.0, 6.0, '🎈'),
+    {
+      name: 'Kalaw',
+      points: '2.0,68.0 5.0,62.8 11.0,62.8 14.0,68.0 11.0,73.2 5.0,73.2',
+      center: { x: 8.0, y: 68.0 },
+      labelOffset: { x: 0, y: 0.5 },
+      starOffset: { x: 3.5, y: -4.5 },
+      lat: 20.6253,
+      lng: 96.5587,
+      zoom: 14,
+      match: (l) => l.location === 'Kalaw' || l.name.toLowerCase().includes('kalaw'),
+    },
+    {
+      name: 'Inle Lake',
+      points: '16.0,68.0 19.0,62.8 25.0,62.8 28.0,68.0 25.0,73.2 19.0,73.2',
+      center: { x: 22.0, y: 68.0 },
+      labelOffset: { x: 0, y: 0.5 },
+      starOffset: { x: 3.5, y: -4.5 },
+      lat: 20.55,
+      lng: 96.92,
+      zoom: 12,
+      match: (l) => l.location === 'Inle Lake' || l.name.toLowerCase().includes('inle lake'),
+    },
+    {
+      name: 'Taunggyi',
+      points: '30.0,55.0 33.0,49.8 39.0,49.8 42.0,55.0 39.0,60.2 33.0,60.2',
+      center: { x: 36.0, y: 55.0 },
+      labelOffset: { x: 0, y: 0.5 },
+      starOffset: { x: 3.5, y: -4.5 },
+      lat: 20.7842,
+      lng: 97.0336,
+      zoom: 14,
+      match: (l) => l.location === 'Taunggyi' || l.name.toLowerCase().includes('taunggyi'),
+    },
   ],
-  // Ayeyarwady Region
-  ayeyarwady: [
-    getHexagonData('Ngwe Saung', 32.0, 45.0, 6.0, '🏖️'),
-    getHexagonData('Chaung Thar', 32.0, 35.0, 6.0, '🏖️'),
-  ],
-  // Mandalay Region
-  mandalay: [
-    getHexagonData('Mandalay', 48.0, 32.0, 6.0, '🏰'),
-    getHexagonData('Pyin Oo Lwin', 74.0, 22.0, 6.0, '🌸'),
-    getHexagonData('Bagan', 22.0, 58.0, 6.0, '🛕'),
-    getHexagonData('Nay Pyi Daw', 46.0, 84.0, 6.0, '🏛️'),
-  ],
-  // Yangon Region
   yangon: [
-    getHexagonData('Yangon', 50.0, 55.0, 6.0, '🏙️'),
+    {
+      name: 'Yangon',
+      points: '37.0,50.0 41.0,44.0 49.0,44.0 53.0,50.0 49.0,56.0 41.0,56.0',
+      center: { x: 45.0, y: 50.0 },
+      labelOffset: { x: 0, y: 0.5 },
+      starOffset: { x: 4.5, y: -5.5 },
+      lat: 16.81,
+      lng: 96.135,
+      zoom: 12,
+      match: (l) => l.regionId === 'yangon',
+    },
   ],
-  // Kayin State
-  kayin: [
-    getHexagonData('Hpa Ann', 45.0, 52.0, 6.0, '⛰️'),
+  mandalay: [
+    {
+      name: 'Mandalay',
+      points: '44.0,48.0 47.0,42.8 53.0,42.8 56.0,48.0 53.0,53.2 47.0,53.2',
+      center: { x: 50.0, y: 48.0 },
+      labelOffset: { x: 0, y: 0.5 },
+      starOffset: { x: 3.5, y: -4.5 },
+      lat: 21.98,
+      lng: 96.0891,
+      zoom: 13,
+      match: (l) => l.regionId === 'mandalay' && l.id !== 'mandalay-bagan',
+    },
+    {
+      name: 'Bagan',
+      points: '12.0,78.0 15.0,72.8 21.0,72.8 24.0,78.0 21.0,83.2 15.0,83.2',
+      center: { x: 18.0, y: 78.0 },
+      labelOffset: { x: 0, y: 0.5 },
+      starOffset: { x: 3.5, y: -4.5 },
+      lat: 21.1717,
+      lng: 94.8585,
+      zoom: 13,
+      match: (l) => l.id === 'mandalay-bagan',
+    },
   ],
-  // Mon State
-  mon: [
-    getHexagonData('Kyike Htee Yoe', 40.0, 25.0, 6.0, '⛩️'),
-  ],
-};
-
-/**
- * Real-world coordinates (lat, lng, zoom) for Interactive OpenStreetMap view
- */
-export const CITY_COORDINATES: Record<string, { lat: number; lng: number; zoom: number }> = {
-  'Kalaw': { lat: 20.6253, lng: 96.5587, zoom: 14 },
-  'Inle Lake': { lat: 20.5500, lng: 96.9200, zoom: 12 },
-  'Taunggyi': { lat: 20.7842, lng: 97.0336, zoom: 14 },
-  'Pathein': { lat: 16.7790, lng: 94.7320, zoom: 13 },
-  'Ngwe Saung': { lat: 16.8520, lng: 94.3880, zoom: 13 },
-  'Chaungtha': { lat: 16.9539, lng: 94.4372, zoom: 14 },
-  'Chaung Thar': { lat: 16.9539, lng: 94.4372, zoom: 14 },
-  'Shwe Taung Yan': { lat: 17.0667, lng: 94.4667, zoom: 14 },
-  'Gaw Yan Gyi': { lat: 15.9520, lng: 94.2815, zoom: 13 },
-  'Mandalay': { lat: 21.9588, lng: 96.0891, zoom: 13 },
-  'Pyin Oo Lwin': { lat: 22.0350, lng: 96.4632, zoom: 14 },
-  'Bagan': { lat: 21.1717, lng: 94.8585, zoom: 13 },
-  'Nay Pyi Daw': { lat: 19.7633, lng: 96.0785, zoom: 13 },
-  'Yangon': { lat: 16.8661, lng: 96.1951, zoom: 13 },
-  'Hpa Ann': { lat: 16.8897, lng: 97.6348, zoom: 14 },
-  'Kyike Htee Yoe': { lat: 17.4789, lng: 97.0981, zoom: 13 },
 };
 
 // Helper to parse exact bounding box of any SVG path coords dynamically
@@ -385,6 +378,10 @@ export default function MyanmarMap({
   const [expandedClusterIds, setExpandedClusterIds] = useState<string[]>([]);
   const [focusedClusterId, setFocusedClusterId] = useState<string | null>(null);
   const [focusedCity, setFocusedCity] = useState<string | null>(null);
+
+  // City hubs available for the currently selected region (undefined if this region has no hubs)
+  const cityHubs = selectedRegion ? REGION_CITY_HUBS[selectedRegion.id] : undefined;
+  const activeCityHub = cityHubs?.find(h => h.name === focusedCity);
 
   // Zoom & Pan state for detailed regional views
   const stageRef = React.useRef<HTMLDivElement>(null);
@@ -694,14 +691,15 @@ export default function MyanmarMap({
     const list = selectedRegion.landmarks
       .filter((landmark) => !selectedCategory || selectedCategory === 'all' || landmark.category === selectedCategory)
       .filter((landmark) => {
-        if (focusedCity) {
-          const fc = focusedCity.toLowerCase();
-          const loc = (landmark.location || '').toLowerCase();
-          const name = landmark.name.toLowerCase();
-          return loc === fc || loc.includes(fc) || name.includes(fc) || fc.includes(loc);
-        }
-        if (landmark.category === 'hotel' && landmark.location) {
-          return false;
+        const hubs = REGION_CITY_HUBS[selectedRegion.id];
+        if (hubs) {
+          const activeHub = focusedCity ? hubs.find(h => h.name === focusedCity) : undefined;
+          if (landmark.category === 'hotel') {
+            return activeHub ? activeHub.match(landmark) : false;
+          }
+          if (focusedCity) {
+            return activeHub ? activeHub.match(landmark) : false;
+          }
         }
         return true;
       });
@@ -733,8 +731,8 @@ export default function MyanmarMap({
 
       let foundCluster: LocalCluster | undefined = undefined;
 
-      // Bypass clustering for regions with city hexagons to allow individual pins
-      if (!REGION_CITY_HEXAGONS[selectedRegion.id]) {
+      // Bypass clustering entirely for regions with city hubs, allowing each hotel/landmark to render as an individual pin
+      if (!REGION_CITY_HUBS[selectedRegion.id]) {
         if (item.category === 'hotel' && item.location) {
           // Find existing hotel cluster with the SAME location name
           foundCluster = computedClusters.find(c => c.locationName === item.location);
@@ -918,8 +916,8 @@ export default function MyanmarMap({
               </span>
             </div>
 
-            {/* Embedded Inline OpenStreetMap View for Cities */}
-            {focusedCity && (
+            {/* Embedded Inline OpenStreetMap View for City Hub Regions */}
+            {cityHubs && focusedCity && activeCityHub && (
               <div className="absolute inset-0 z-40 bg-white flex flex-col p-4">
                 <div className="flex items-center justify-between mb-3 shrink-0">
                   <div className="flex flex-col">
@@ -961,17 +959,9 @@ export default function MyanmarMap({
                 </div>
                 <div className="flex-1 min-h-0 relative">
                   <EmbeddedOSMMap
-                    center={
-                      CITY_COORDINATES[focusedCity]
-                        ? { lat: CITY_COORDINATES[focusedCity].lat, lng: CITY_COORDINATES[focusedCity].lng }
-                        : { lat: 16.852, lng: 94.388 }
-                    }
-                    zoom={CITY_COORDINATES[focusedCity]?.zoom || 13}
-                    markers={selectedRegion.landmarks.filter(lm => 
-                      (lm.location && lm.location.toLowerCase() === focusedCity.toLowerCase()) || 
-                      lm.name.toLowerCase().includes(focusedCity.toLowerCase()) ||
-                      focusedCity.toLowerCase().includes((lm.location || '').toLowerCase())
-                    )}
+                    center={{ lat: activeCityHub.lat, lng: activeCityHub.lng }}
+                    zoom={activeCityHub.zoom}
+                    markers={selectedRegion.landmarks.filter(lm => activeCityHub.match(lm))}
                     selectedMarker={selectedLandmark}
                     onSelectMarker={(marker) => {
                       onSelectLandmark(marker);
@@ -1124,7 +1114,7 @@ export default function MyanmarMap({
               return (
                 <>
                   {/* Floating Zoom Controls Panel */}
-                  {!focusedCity && (
+                  {!(cityHubs && focusedCity) && (
                     <div className="absolute top-4 right-4 z-40 flex items-center gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-neutral-200/60 pointer-events-auto">
                       <button
                         type="button"
@@ -1243,10 +1233,10 @@ export default function MyanmarMap({
                           className={`${currentTheme.mapHover} ${currentTheme.mapStroke} fill-opacity-95 ${currentTheme.mapGlow} transition-[fill,stroke,filter] duration-300`}
                         />
 
-                        {/* Interactive Polygons for Region Cities styled as glowing white hexagons */}
-                        {REGION_CITY_HEXAGONS[selectedRegion.id] && (
-                          <g className="city-hexagons-layer">
-                            {REGION_CITY_HEXAGONS[selectedRegion.id].map((city) => {
+                        {/* Interactive Polygons for City Hub Regions (e.g. Shan's Kalaw/Inle Lake/Taunggyi, Mandalay's Mandalay/Bagan) styled as glowing white hexagons */}
+                        {cityHubs && (
+                          <g transform={`translate(${offsetX}, ${offsetY}) scale(${(width * S) / 100}, ${(height * S) / 100})`}>
+                            {cityHubs.map((city) => {
                               const isFocused = focusedCity === city.name;
                               const centerX = offsetX + (city.center.x / 100) * (width * S);
                               const centerY = offsetY + (city.center.y / 100) * (height * S);
@@ -1437,8 +1427,8 @@ export default function MyanmarMap({
                                   if (clusterId) {
                                     setFocusedClusterId(clusterId);
                                   }
-                                  if (landmark.location) {
-                                    setFocusedCity(landmark.location);
+                                  if (cityHubs?.some(h => h.name === landmark.location)) {
+                                    setFocusedCity(landmark.location!);
                                   }
                                 }}
                                 className="relative group outline-none flex flex-col items-center justify-center transition-transform duration-200"
@@ -1980,12 +1970,12 @@ export default function MyanmarMap({
 
                 {/* BOTTOM CARD: Cluster spots list OR default "More Hotels" list */}
                 <div className="flex-1 min-h-0 bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm p-5 flex flex-col overflow-y-auto">
-                  {focusedCity ? (
+                  {cityHubs && focusedCity && activeCityHub ? (
                     /* Show spots in the active focused city */
                     <div>
                       <div className="flex items-center justify-between mb-2.5">
                         <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="text-base">🏨</span> Hotels in {focusedCity}
+                          <span className="text-base">🏨</span> Places in {focusedCity}
                         </h4>
                         <button
                           type="button"
@@ -2000,11 +1990,7 @@ export default function MyanmarMap({
                       </div>
                       <div className="space-y-2">
                         {(() => {
-                          const cityItems = selectedRegion.landmarks.filter(l => 
-                            (l.location && l.location.toLowerCase() === focusedCity.toLowerCase()) || 
-                            l.name.toLowerCase().includes(focusedCity.toLowerCase()) ||
-                            focusedCity.toLowerCase().includes((l.location || '').toLowerCase())
-                          );
+                          const cityItems = selectedRegion.landmarks.filter(l => activeCityHub.match(l));
                           
                           if (cityItems.length > 0) {
                             return cityItems.map(item => {
@@ -2043,7 +2029,7 @@ export default function MyanmarMap({
                             });
                           } else {
                             return (
-                              <p className="text-[11px] text-neutral-400 italic">No hotels found in {focusedCity}.</p>
+                              <p className="text-[11px] text-neutral-400 italic">No spots found in {focusedCity}.</p>
                             );
                           }
                         })()}
