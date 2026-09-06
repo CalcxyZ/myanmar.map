@@ -17,7 +17,7 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
   onSelectMarker,
 }) => {
   const [isLeafletLoaded, setIsLeafletLoaded] = useState(false);
-  const [loadError, setFormError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [currentZoom, setCurrentZoom] = useState<number>(zoom);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -30,15 +30,13 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     onSelectMarkerRef.current = onSelectMarker;
   }, [onSelectMarker]);
 
-  // Dynamically load Leaflet library from CDN to prevent any compile-time or dependency environment issues
+  // Dynamically load Leaflet library from CDN
   useEffect(() => {
-    // Check if Leaflet is already loaded on window
     if ((window as any).L) {
       setIsLeafletLoaded(true);
       return;
     }
 
-    // 1. Load Leaflet CSS
     const cssId = 'leaflet-cdn-css';
     if (!document.getElementById(cssId)) {
       const link = document.createElement('link');
@@ -49,7 +47,6 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       document.head.appendChild(link);
     }
 
-    // 2. Load Leaflet JS
     const jsId = 'leaflet-cdn-js';
     if (!document.getElementById(jsId)) {
       const script = document.createElement('script');
@@ -61,11 +58,10 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
         setIsLeafletLoaded(true);
       };
       script.onerror = () => {
-        setFormError('Failed to load OpenStreetMap script. Please check your internet connection.');
+        setLoadError('Failed to load OpenStreetMap script. Please check your internet connection.');
       };
       document.body.appendChild(script);
     } else {
-      // Script tag exists, wait for load
       const interval = setInterval(() => {
         if ((window as any).L) {
           setIsLeafletLoaded(true);
@@ -81,39 +77,29 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     if (!isLeafletLoaded || !mapContainerRef.current) return;
 
     const L = (window as any).L;
-    if (!L) return;
-
-    // Check if map is already initialized on this container
-    if (mapInstanceRef.current) {
-      return;
-    }
+    if (!L || mapInstanceRef.current) return;
 
     try {
-      // Create map instance
       const map = L.map(mapContainerRef.current, {
         zoomControl: true,
         scrollWheelZoom: true,
         attributionControl: true,
       }).setView([center.lat, center.lng], zoom);
 
-      // Add standard high-quality OpenStreetMap Tile Layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
       }).addTo(map);
 
-      // Add a group to hold all hotel markers
       const markerGroup = L.layerGroup().addTo(map);
 
       mapInstanceRef.current = map;
       markerGroupRef.current = markerGroup;
 
-      // Track zoom changes dynamically
       map.on('zoomend', () => {
         setCurrentZoom(map.getZoom());
       });
 
-      // Unselect marker when clicking on empty map space
       map.on('click', () => {
         onSelectMarkerRef.current(null);
       });
@@ -122,7 +108,6 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     }
 
     return () => {
-      // Clean up Leaflet map instance on component unmount
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -132,18 +117,17 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     };
   }, [isLeafletLoaded]);
 
-  // Handle camera position updates when center/zoom props change
+  // Handle camera position updates
   useEffect(() => {
     const L = (window as any).L;
     if (!L || !mapInstanceRef.current) return;
 
     const currentCenter = mapInstanceRef.current.getCenter();
-    const currentZoom = mapInstanceRef.current.getZoom();
+    const mapZoom = mapInstanceRef.current.getZoom();
 
     const centerDist = Math.abs(currentCenter.lat - center.lat) + Math.abs(currentCenter.lng - center.lng);
-    const zoomDist = Math.abs(currentZoom - zoom);
+    const zoomDist = Math.abs(mapZoom - zoom);
 
-    // Smooth transition if the location changes
     if (centerDist > 0.0001 || zoomDist > 0.1) {
       mapInstanceRef.current.flyTo([center.lat, center.lng], zoom, {
         animate: true,
@@ -157,50 +141,44 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     const L = (window as any).L;
     if (!L || !mapInstanceRef.current || !markerGroupRef.current) return;
 
-    // Clear old markers
     markerGroupRef.current.clearLayers();
     markerMapRef.current.clear();
 
-    // Custom cute hotel marker icons
-    const getCategoryEmoji = (category: string) => {
-      switch (category) {
+    const getCategoryEmoji = (category?: string) => {
+      switch (category?.toLowerCase()) {
         case 'hotel': return '🏨';
         case 'beach': return '🏖️';
         case 'nature': return '🌿';
         case 'sacred': return '🙏';
         case 'historical': return '🏛️';
         case 'cultural': return '🎎';   
-        default: return '🏨';
+        default: return '📍';
       }
     };
 
-    markers.forEach((marker) => {
-      if (marker.lat === undefined || marker.lng === undefined) return;
+    (markers || []).forEach((marker) => {
+      if (marker?.lat === undefined || marker?.lng === undefined) return;
 
       const isSelected = selectedMarker?.id === marker.id;
-      const emoji = getCategoryEmoji(marker.category)||'📍';
-      const ratingText = marker.rating ? `★ ${marker.rating}` : '';
+      const category = marker.category || 'landmark';
+      const emoji = getCategoryEmoji(category);
+      const markerName = marker.name || 'Unnamed Location';
 
-      // Determine marker presentation mode based on zoom level
-      // Zoom <= 15 (< 16): Compact icon pin badge (shows name on hover)
-      // Zoom >= 16: Icon + Hotel Name
       let customIconHtml = '';
 
       if (currentZoom < 16 && !isSelected) {
-        // Compact Zoomed-Out Mode: Cute round icon pin badge, reveals name on hover
         customIconHtml = `
           <div class="relative group cursor-pointer select-none transition-all duration-300 transform -translate-x-1/2 -translate-y-full" style="pointer-events: auto;">
             <div class="relative flex items-center justify-center">
               <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md ring-2 ring-white hover:scale-110 hover:from-amber-500 hover:to-orange-500 transition-all duration-200">
                 <span class="text-sm leading-none filter drop-shadow-sm">${emoji}</span>
-                <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-[150px] group-hover:opacity-100 font-extrabold text-xs whitespace-nowrap tracking-tight font-sans drop-shadow-sm transition-all duration-300">${marker.name}</span>
+                <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-[150px] group-hover:opacity-100 font-extrabold text-xs whitespace-nowrap tracking-tight font-sans drop-shadow-sm transition-all duration-300">${markerName}</span>
               </div>
             </div>
             <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-600 mx-auto -mt-0.5 filter drop-shadow-sm"></div>
           </div>
         `;
       } else {
-        // Expanded Mode (Zoom >= 16 or Selected): Icon + Hotel Name
         customIconHtml = `
           <div class="relative group cursor-pointer select-none transition-all duration-300 transform -translate-x-1/2 -translate-y-full" style="pointer-events: auto;">
             ${isSelected ? '<div class="absolute -inset-1.5 rounded-full bg-amber-400/70 blur-md animate-pulse"></div>' : ''}
@@ -211,7 +189,7 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
                   : 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-lg ring-2 ring-white/90 hover:scale-105 hover:from-amber-500 hover:to-orange-500'
               } transition-all duration-200">
                 <span class="text-base leading-none filter drop-shadow-sm">${emoji}</span>
-                <span class="font-extrabold text-xs whitespace-nowrap tracking-tight font-sans drop-shadow-sm">${marker.name}</span>
+                <span class="font-extrabold text-xs whitespace-nowrap tracking-tight font-sans drop-shadow-sm">${markerName}</span>
               </div>
             </div>
             <div class="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent ${
@@ -232,12 +210,10 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       const mapMarker = L.marker([marker.lat, marker.lng], { icon })
         .addTo(markerGroupRef.current);
 
-     
-
-      const categoryLabel = marker.category.charAt(0).toUpperCase() + marker.category.slice(1);
+      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
       mapMarker.bindTooltip(
         `<div class="p-1.5 font-sans">
-          <div class="font-bold text-xs text-neutral-800">${marker.name}</div>
+          <div class="font-bold text-xs text-neutral-800">${markerName}</div>
           <div class="text-[10px] text-amber-600 font-medium capitalize mt-0.5">${emoji} ${categoryLabel}${marker.location ? ` · ${marker.location}` : ''}</div>
         </div>`,
         {
@@ -247,7 +223,6 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
         }
       );
 
-      // Handle marker click
       mapMarker.on('click', (e: any) => {
         if (e && e.originalEvent) {
           e.originalEvent.stopPropagation();
@@ -259,7 +234,7 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
     });
   }, [markers, selectedMarker, isLeafletLoaded, currentZoom]);
 
-  // React to selecting marker outside or clicking on pins
+  // Handle marker selection focus
   useEffect(() => {
     if (!isLeafletLoaded || !mapInstanceRef.current) return;
 
