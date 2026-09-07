@@ -6,7 +6,7 @@ interface EmbeddedOSMMapProps {
   zoom: number;
   markers: Landmark[];
   selectedMarker: Landmark | null;
-  onSelectMarker: (marker: Landmark) => void;
+  onSelectMarker: (marker: Landmark | null) => void;
 }
 
 export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
@@ -23,6 +23,12 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
   const mapInstanceRef = useRef<any>(null);
   const markerGroupRef = useRef<any>(null);
   const markerMapRef = useRef<Map<string, any>>(new Map());
+  const onSelectMarkerRef = useRef(onSelectMarker);
+  const lastSelectedIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    onSelectMarkerRef.current = onSelectMarker;
+  }, [onSelectMarker]);
 
   // Dynamically load Leaflet library from CDN to prevent any compile-time or dependency environment issues
   useEffect(() => {
@@ -105,6 +111,11 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       // Track zoom changes dynamically
       map.on('zoomend', () => {
         setCurrentZoom(map.getZoom());
+      });
+
+      // Unselect marker when clicking on empty map space
+      map.on('click', () => {
+        onSelectMarkerRef.current(null);
       });
     } catch (err) {
       console.error('Error initializing Leaflet map:', err);
@@ -242,37 +253,37 @@ export const EmbeddedOSMMap: React.FC<EmbeddedOSMMapProps> = ({
       );
 
       // Handle marker click
-      mapMarker.on('click', () => {
-        onSelectMarker(marker);
+      mapMarker.on('click', (e: any) => {
+        if (e && e.originalEvent) {
+          e.originalEvent.stopPropagation();
+        }
+        onSelectMarkerRef.current(marker);
       });
 
       markerMapRef.current.set(marker.id, mapMarker);
     });
-
-    // If there is an active selected hotel, fly to it and open tooltip
-    if (selectedMarker) {
-      const activeMapMarker = markerMapRef.current.get(selectedMarker.id);
-      if (activeMapMarker) {
-        setTimeout(() => {
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.setView(activeMapMarker.getLatLng(), Math.max(mapInstanceRef.current.getZoom(), 15));
-            activeMapMarker.openTooltip();
-          }
-        }, 100);
-      }
-    }
   }, [markers, selectedMarker, isLeafletLoaded, currentZoom]);
 
-  // React to selecting marker outside (sidebar list selection)
+  // React to selecting marker outside or clicking on pins
   useEffect(() => {
-    if (!isLeafletLoaded || !mapInstanceRef.current || !selectedMarker) return;
+    if (!isLeafletLoaded || !mapInstanceRef.current) return;
 
-    const activeMapMarker = markerMapRef.current.get(selectedMarker.id);
-    if (activeMapMarker) {
-      mapInstanceRef.current.setView(activeMapMarker.getLatLng(), Math.max(mapInstanceRef.current.getZoom(), 15));
-      activeMapMarker.openTooltip();
+    if (selectedMarker) {
+      if (lastSelectedIdRef.current !== selectedMarker.id) {
+        lastSelectedIdRef.current = selectedMarker.id;
+        const activeMapMarker = markerMapRef.current.get(selectedMarker.id);
+        if (activeMapMarker) {
+          mapInstanceRef.current.setView(activeMapMarker.getLatLng(), Math.max(mapInstanceRef.current.getZoom(), 15));
+          activeMapMarker.openTooltip();
+        }
+      }
+    } else {
+      lastSelectedIdRef.current = null;
+      markerMapRef.current.forEach((m) => {
+        if (m) m.closeTooltip();
+      });
     }
-  }, [selectedMarker]);
+  }, [selectedMarker, isLeafletLoaded]);
 
   return (
     <div className="relative w-full h-full min-h-[350px] rounded-xl overflow-hidden shadow-inner border border-neutral-200">
