@@ -22,7 +22,9 @@ import {
   Trash2,
   Plus,
   Star,
-  StarHalf
+  StarHalf,
+  Search,
+  X
 } from 'lucide-react';
 
 interface MyanmarMapProps {
@@ -139,7 +141,7 @@ export const CITY_COORDINATES: Record<string, { lat: number; lng: number; zoom: 
   'Pyin Oo Lwin': { lat: 22.0350, lng: 96.4632, zoom: 14 },
   'Bagan': { lat: 21.1717, lng: 94.8585, zoom: 13 },
   'Nay Pyi Daw': { lat: 19.7633, lng: 96.0785, zoom: 13 },
-  'Yangon': { lat: 16.8661, lng: 96.1951, zoom: 13 },
+  'Yangon': { lat: 16.8050, lng: 96.1550, zoom: 13 },
   'Hpa Ann': { lat: 16.8897, lng: 97.6348, zoom: 14 },
   'Kyike Htee Yoe': { lat: 17.4789, lng: 97.0981, zoom: 13 },
 };
@@ -386,6 +388,10 @@ export default function MyanmarMap({
   const [focusedClusterId, setFocusedClusterId] = useState<string | null>(null);
   const [focusedCity, setFocusedCity] = useState<string | null>(null);
 
+  // Search and filter state for regional detail cabinet and OpenStreetMap
+  const [regionSearchQuery, setRegionSearchQuery] = useState<string>('');
+  const [regionSelectedCategory, setRegionSelectedCategory] = useState<string>('all');
+
   // Zoom & Pan state for detailed regional views
   const stageRef = React.useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<number>(1);
@@ -442,7 +448,29 @@ export default function MyanmarMap({
     setAnimatingClusterIds([]);
     setFocusedClusterId(null);
     setFocusedCity(null);
+    setRegionSearchQuery('');
+    setRegionSelectedCategory('all');
   }, [selectedRegion?.id, isDetailedView]);
+
+  // Compute filtered landmarks for the detailed region view
+  const filteredRegionLandmarks = React.useMemo(() => {
+    if (!selectedRegion) return [];
+    const query = regionSearchQuery.trim().toLowerCase();
+    
+    return selectedRegion.landmarks.filter((lm) => {
+      if (regionSelectedCategory !== 'all' && lm.category !== regionSelectedCategory) {
+        return false;
+      }
+      if (!query) return true;
+      return (
+        lm.name.toLowerCase().includes(query) ||
+        (lm.description || '').toLowerCase().includes(query) ||
+        (lm.usp || '').toLowerCase().includes(query) ||
+        (lm.location || '').toLowerCase().includes(query) ||
+        lm.category.toLowerCase().includes(query)
+      );
+    });
+  }, [selectedRegion, regionSearchQuery, regionSelectedCategory]);
 
   // Unified camera centering and zoom effect handles all categories elegantly, located below clusters memo
 
@@ -921,21 +949,45 @@ export default function MyanmarMap({
             {/* Embedded Inline OpenStreetMap View for Cities */}
             {focusedCity && (
               <div className="absolute inset-0 z-40 bg-white flex flex-col p-4">
-                <div className="flex items-center justify-between mb-3 shrink-0">
-                  <div className="flex flex-col">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 shrink-0">
+                  <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-sans capitalize">
+                      <span className="text-xs font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-sans capitalize shrink-0">
                         📍 {focusedCity}
                       </span>
-                      <h4 className="text-xs font-bold text-neutral-800">
+                      <h4 className="text-xs font-bold text-neutral-800 truncate">
                         Interactive OpenStreetMap
                       </h4>
                     </div>
-                    <span className="text-[10px] text-neutral-500 font-medium font-sans mt-0.5">
+                    <span className="text-[10px] text-neutral-500 font-medium font-sans mt-0.5 truncate">
                       Showing curated hotels & attractions in {focusedCity}
                     </span>
                   </div>
-                  <div className="flex gap-2">
+
+                  {/* Search Bar right inside the OSM Toolbar */}
+                  <div className="flex items-center gap-2 flex-1 sm:max-w-xs justify-end">
+                    <div className="relative w-full">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={regionSearchQuery}
+                        onChange={(e) => setRegionSearchQuery(e.target.value)}
+                        placeholder={`Search in ${focusedCity}...`}
+                        className="w-full pl-8 pr-7 py-1.5 text-xs bg-neutral-50 rounded-lg border border-neutral-200 text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white transition-all shadow-2xs"
+                      />
+                      {regionSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setRegionSearchQuery('')}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => {
                         setFocusedCity(null);
@@ -967,7 +1019,7 @@ export default function MyanmarMap({
                         : { lat: 16.852, lng: 94.388 }
                     }
                     zoom={CITY_COORDINATES[focusedCity]?.zoom || 13}
-                    markers={selectedRegion.landmarks.filter(lm => 
+                    markers={filteredRegionLandmarks.filter(lm => 
                       (lm.location && lm.location.toLowerCase() === focusedCity.toLowerCase()) || 
                       lm.name.toLowerCase().includes(focusedCity.toLowerCase()) ||
                       focusedCity.toLowerCase().includes((lm.location || '').toLowerCase())
@@ -1804,13 +1856,106 @@ export default function MyanmarMap({
                   </button>
                 </div>
               </form>
-            ) : (focusedClusterId || selectedLandmark) ? (
-              /* ================= DETAILED LANDMARK / CLUSTER CARD ================= */
-              <div id="landmark-detail-sheet" className="flex-1 flex flex-col gap-1.5 min-h-0 h-full">
-                {/* TOP CARD: Landmark details or Cluster overview */}
-                <div className="flex-none bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm p-3 flex flex-col">
-                  {selectedLandmark ? (
-                    <div>
+            ) : (
+              /* ================= REGION DETAIL SEARCH & CABINET VIEW ================= */
+              <div id="landmark-explanation-cabinet-content" className="flex-1 flex flex-col gap-2 min-h-0 h-full">
+                
+                {/* Search & Category Filter Header Bar */}
+                <div className="flex-none bg-neutral-50 rounded-xl border border-neutral-200 shadow-2xs p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm">📍</span>
+                      <h3 className="text-xs font-bold text-neutral-800 uppercase tracking-wide truncate">
+                        {selectedRegion.name}
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 shrink-0">
+                      {filteredRegionLandmarks.length} {filteredRegionLandmarks.length === 1 ? 'spot' : 'spots'}
+                    </span>
+                  </div>
+
+                  {/* Search Input Field */}
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                    <input
+                      id="region-detail-search-input"
+                      type="text"
+                      value={regionSearchQuery}
+                      onChange={(e) => setRegionSearchQuery(e.target.value)}
+                      placeholder={`Search in ${selectedRegion.name}...`}
+                      className="w-full pl-8 pr-7 py-1.5 text-xs bg-white rounded-lg border border-neutral-200 text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-all shadow-2xs"
+                    />
+                    {regionSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setRegionSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 cursor-pointer"
+                        aria-label="Clear region search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Filter Chips */}
+                  <div className="flex items-center gap-1 overflow-x-auto pb-0.5 no-scrollbar text-[10px]">
+                    {[
+                      { id: 'all', label: 'All', emoji: '🗺️' },
+                      { id: 'hotel', label: 'Hotels', emoji: '🏨' },
+                      { id: 'sacred', label: 'Sacred', emoji: '🕌' },
+                      { id: 'cultural', label: 'Culture', emoji: '🎨' },
+                      { id: 'nature', label: 'Nature', emoji: '🌳' },
+                      { id: 'historical', label: 'History', emoji: '🏰' },
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setRegionSelectedCategory(cat.id)}
+                        className={`px-2 py-0.5 rounded-md whitespace-nowrap font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                          regionSelectedCategory === cat.id
+                            ? 'bg-amber-600 text-white font-bold shadow-2xs'
+                            : 'bg-white text-neutral-600 border border-neutral-200/60 hover:bg-neutral-100'
+                        }`}
+                      >
+                        <span>{cat.emoji}</span>
+                        <span>{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Active Context / Deselect Bar */}
+                  {(selectedLandmark || focusedCity || regionSearchQuery || regionSelectedCategory !== 'all') && (
+                    <div className="pt-1.5 border-t border-neutral-200/60 flex items-center justify-between text-[10px]">
+                      <span className="text-neutral-500 truncate max-w-[170px]">
+                        {selectedLandmark 
+                          ? `Viewing: ${selectedLandmark.name}` 
+                          : focusedCity 
+                            ? `City: ${focusedCity}` 
+                            : regionSearchQuery 
+                              ? `Filtered: "${regionSearchQuery}"` 
+                              : `Category: ${regionSelectedCategory}`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedLandmark) onSelectLandmark(null);
+                          else if (regionSearchQuery) setRegionSearchQuery('');
+                          else if (regionSelectedCategory !== 'all') setRegionSelectedCategory('all');
+                          else if (focusedCity) setFocusedCity(null);
+                        }}
+                        className="text-amber-700 hover:text-amber-900 font-bold hover:underline shrink-0 cursor-pointer"
+                      >
+                        {selectedLandmark ? 'Clear selection' : 'Reset filters'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Main Content Area: Selected Card OR Searchable Spots List */}
+                {selectedLandmark ? (
+                  <div id="landmark-detail-sheet" className="flex-1 flex flex-col gap-2 min-h-0 h-full overflow-hidden">
+                    {/* Landmark Detail Card */}
+                    <div className="flex-none bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm p-3.5 flex flex-col max-h-[50vh] overflow-y-auto">
                       <div className="flex items-center justify-between mb-2">
                         <span className={`text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full font-bold ${getCategoryTheme(selectedLandmark.category).color}`}>
                           {selectedLandmark.category}
@@ -1820,23 +1965,30 @@ export default function MyanmarMap({
                         </span>
                       </div>
 
-                      <h3 className={`text-base sm:text-lg font-bold ${currentTheme.primaryText} mb-2`}>
+                      <h3 className={`text-base font-bold ${currentTheme.primaryText} mb-1.5`}>
                         {selectedLandmark.name}
                       </h3>
+
+                      {selectedLandmark.location && (
+                        <div className="text-[11px] text-neutral-500 font-medium mb-2 flex items-center gap-1">
+                          <span>📍</span>
+                          <span>{selectedLandmark.location}, {selectedRegion.name}</span>
+                        </div>
+                      )}
                       
                       {selectedLandmark.rating !== undefined && (
-                        <div className="flex items-center gap-1.5 mb-3 select-none">
+                        <div className="flex items-center gap-1.5 mb-2.5 select-none">
                           <div className="flex items-center gap-0.5 text-amber-400">
                             {Array.from({ length: 5 }).map((_, i) => {
                               const ratingVal = selectedLandmark.rating || 0;
                               const isFull = i + 1 <= Math.floor(ratingVal);
                               const isHalf = !isFull && (i < ratingVal) && (ratingVal % 1 >= 0.5);
                               if (isFull) {
-                                return <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />;
+                                return <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />;
                               } else if (isHalf) {
-                                return <StarHalf key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />;
+                                return <StarHalf key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />;
                               } else {
-                                return <Star key={i} className="w-4 h-4 text-neutral-200 fill-none" />;
+                                return <Star key={i} className="w-3.5 h-3.5 text-neutral-200 fill-none" />;
                               }
                             })}
                           </div>
@@ -1845,355 +1997,253 @@ export default function MyanmarMap({
                           </span>
                         </div>
                       )}
-                      
-                      {selectedLandmark.category !== 'hotel' && (
-                        <p className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
-                          {selectedLandmark.description}
-                        </p>
-                      )}
 
-                      {selectedLandmark.category === 'hotel' && (selectedLandmark.facebook || selectedLandmark.email || selectedLandmark.phoneNumber) && (
-                        <div className="mb-4 rounded-lg border border-red-100 bg-red-50/60 p-3 text-[11px] text-neutral-700 space-y-1.5">
-                          {selectedLandmark.facebook && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-bold text-red-600 min-w-20">Facebook:</span>
-                              <a
-                                href={selectedLandmark.facebook}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-red-700 hover:underline break-all"
-                              >
-                                {selectedLandmark.facebook}
-                              </a>
-                            </div>
-                          )}
-                          {selectedLandmark.email && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-bold text-red-600 min-w-20">Email:</span>
-                              <a
-                                href={'mailto:' + selectedLandmark.email}
-                                className="text-red-700 hover:underline break-all"
-                              >
-                                {selectedLandmark.email}
-                              </a>
-                            </div>
-                          )}
+                      <p className="text-xs text-neutral-600 leading-relaxed mb-3">
+                        {selectedLandmark.description}
+                      </p>
+
+                      {/* Hotel Contact Details (Phone, Email, Facebook) */}
+                      {(selectedLandmark.phoneNumber || selectedLandmark.email || selectedLandmark.facebook) && (
+                        <div className="bg-white rounded-lg p-2.5 border border-neutral-200 mb-3 space-y-1.5 text-xs">
                           {selectedLandmark.phoneNumber && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-bold text-red-600 min-w-20">Phone:</span>
-                              <a
-                                href={'tel:' + selectedLandmark.phoneNumber.replace(/\s+/g, '')}
-                                className="text-red-700 hover:underline"
+                            <div className="flex items-center gap-2 text-neutral-600">
+                              <span className="text-neutral-400">📞</span>
+                              <a 
+                                href={`tel:${selectedLandmark.phoneNumber.replace(/[^0-9+]/g, '')}`} 
+                                className="font-semibold hover:text-amber-700 transition-colors"
                               >
                                 {selectedLandmark.phoneNumber}
                               </a>
                             </div>
                           )}
+                          {selectedLandmark.email && (
+                            <div className="flex items-center gap-2 text-neutral-600">
+                              <span className="text-neutral-400">✉️</span>
+                              <a 
+                                href={`mailto:${selectedLandmark.email}`} 
+                                className="font-semibold hover:text-amber-700 transition-colors truncate"
+                              >
+                                {selectedLandmark.email}
+                              </a>
+                            </div>
+                          )}
+                          {selectedLandmark.facebook && (
+                            <div className="flex items-center gap-2 text-neutral-600">
+                              <span className="text-neutral-400">🌐</span>
+                              <a 
+                                href={selectedLandmark.facebook} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-amber-700 font-semibold hover:underline truncate"
+                              >
+                                Facebook Page
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {/* External Map Buttons */}
-                      {(selectedLandmark.googleMapsUrl || (selectedLandmark.lat !== undefined && selectedLandmark.lng !== undefined)) && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <a
-                            href={selectedLandmark.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${selectedLandmark.lat},${selectedLandmark.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all text-center"
+                      {/* Google Maps Button */}
+                      {selectedLandmark.googleMapsUrl && (
+                        <a
+                          href={selectedLandmark.googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full mb-3 py-1.5 px-3 bg-white border border-neutral-200 rounded-lg text-xs font-bold text-neutral-700 hover:bg-neutral-50 hover:text-amber-700 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer group"
+                        >
+                          <Navigation className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
+                          <span>View in Google Maps</span>
+                        </a>
+                      )}
+
+                      {/* Highlighted USP Box */}
+                      {selectedLandmark.usp && (
+                        <div className="bg-amber-50/80 border border-amber-200/80 rounded-lg p-2.5 mb-3 text-left">
+                          <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block mb-1">
+                            ✨ Highlight
+                          </span>
+                          <p className="text-xs text-amber-900/90 leading-relaxed font-serif italic">
+                            "{selectedLandmark.usp}"
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-1 space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onSelectLandmark(null)}
+                          className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all"
+                        >
+                          <Compass className="w-3.5 h-3.5" />
+                          View All Spots in {selectedRegion.name}
+                        </button>
+
+                        {selectedLandmark.id.startsWith('custom-') && onDeleteCustomLandmark && (
+                          <button
+                            type="button"
+                            id="delete-custom-landmark-btn"
+                            onClick={() => {
+                              onDeleteCustomLandmark(selectedLandmark.id);
+                              onSelectLandmark(null);
+                            }}
+                            className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-all"
                           >
-                            <MapPin className="w-3.5 h-3.5" />
-                            See in Google Maps
-                          </a>
-                        </div>
-                      )}
-
-                      {/* Cute Golden Trivia box */}
-                      <div className="p-3 bg-amber-50/70 rounded-lg border border-amber-200/50 text-[11px] text-amber-900 leading-relaxed">
-                        <div className="font-bold flex items-center gap-1 text-amber-800 mb-1">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                          Unique Selling Point
-                        </div>
-                        {selectedLandmark.usp}
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete Custom Attraction
+                          </button>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    /* Cluster overview if no specific landmark is selected yet */
-                    <div>
+
+                    {/* Bottom list: other matching spots in the region */}
+                    <div className="flex-1 min-h-0 bg-neutral-50 rounded-xl border border-neutral-200 shadow-2xs p-3 flex flex-col overflow-y-auto">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700">
-                          {clusters.find(c => c.id === focusedClusterId)?.locationName || 'Cluster'}
-                        </span>
-                        <span className="text-xs text-indigo-500 font-bold flex items-center gap-1">
-                          🏨 {clusters.find(c => c.id === focusedClusterId)?.items.length} Hotels / Spots
-                        </span>
+                        <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+                          Other Spots ({filteredRegionLandmarks.length})
+                        </h4>
                       </div>
-
-                      <h3 className="text-base sm:text-lg font-bold text-indigo-950 mb-2">
-                        {clusters.find(c => c.id === focusedClusterId)?.locationName || 'Cluster Highlights'}
-                      </h3>
-                      
-                      <p className="text-xs text-neutral-600 leading-relaxed mb-4 whitespace-pre-line">
-                        Explore all the accommodation and tourist hotspots clustered at this destination. Tap on any item below to view full details!
-                      </p>
-
-                      <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed flex items-center gap-1.5">
-                        <Info className="w-4 h-4 text-indigo-500 shrink-0" />
-                        <span>Tap on any pin or list item below to center and discover local attractions.</span>
+                      <div className="space-y-1.5">
+                        {filteredRegionLandmarks.map((item) => {
+                          const isCurrent = selectedLandmark.id === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                onSelectLandmark(item);
+                                if (item.location && REGION_CITY_HEXAGONS[selectedRegion.id]?.some(c => c.name.toLowerCase() === item.location?.toLowerCase())) {
+                                  setFocusedCity(item.location);
+                                }
+                              }}
+                              className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2 cursor-pointer group ${
+                                isCurrent
+                                  ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-300'
+                                  : 'bg-white hover:bg-neutral-100 border-neutral-200/70'
+                              }`}
+                            >
+                              <span className="text-sm shrink-0">{getCategoryTheme(item.category).emoji}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-bold text-xs text-neutral-800 group-hover:text-amber-700 transition-colors flex items-center justify-between gap-1">
+                                  <span className="truncate">{item.name}</span>
+                                  {item.rating !== undefined && (
+                                    <span className="shrink-0 text-[10px] text-amber-500 font-bold">
+                                      ★ {item.rating.toFixed(1)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[9px] text-neutral-500 mt-0.5 truncate">
+                                  {item.category.toUpperCase()} • {item.visitDuration || '2 Hours'}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
-
-                  {/* Actions for top card */}
-                  <div className="mt-3 pt-3 border-t border-neutral-100 flex flex-col gap-2">
-                    {selectedLandmark && selectedLandmark.id.startsWith('custom-') && onDeleteCustomLandmark && (
+                  </div>
+                ) : (
+                  /* List of all matching spots in the region */
+                  <div className="flex-1 min-h-0 flex flex-col gap-2">
+                    {/* OpenStreetMap Quick Access Banner if city exists */}
+                    {REGION_CITY_HEXAGONS[selectedRegion.id] && !focusedCity && (
                       <button
                         type="button"
-                        id="delete-custom-landmark-btn"
-                        onClick={() => {
-                          onDeleteCustomLandmark(selectedLandmark.id);
-                          onSelectLandmark(null);
-                        }}
-                        className="w-full py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-all"
+                        onClick={() => handleCityClick(REGION_CITY_HEXAGONS[selectedRegion.id][0].name)}
+                        className="w-full p-2.5 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-200 rounded-xl flex items-center justify-between text-left transition-all group cursor-pointer shadow-2xs shrink-0"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete Custom Attraction
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🏙️</span>
+                          <div>
+                            <div className="text-xs font-bold text-amber-900">
+                              Open Interactive Map
+                            </div>
+                            <div className="text-[10px] text-amber-700">
+                              Explore {REGION_CITY_HEXAGONS[selectedRegion.id][0].name} streets & hotel pins
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-amber-700 group-hover:translate-x-0.5 transition-transform" />
                       </button>
                     )}
 
-                    {focusedClusterId && (
+                    {/* Filtered Spots List */}
+                    <div className="flex-1 min-h-0 bg-neutral-50 rounded-xl border border-neutral-200 shadow-2xs p-3 flex flex-col overflow-y-auto">
+                      {filteredRegionLandmarks.length === 0 ? (
+                        <div className="p-6 bg-white rounded-lg border border-dashed border-neutral-200 flex flex-col items-center justify-center text-center my-auto">
+                          <Search className="w-7 h-7 text-neutral-300 mb-2" />
+                          <h4 className="text-xs font-bold text-neutral-700 mb-1">No spots match search</h4>
+                          <p className="text-[11px] text-neutral-400 max-w-[200px] mb-3">
+                            No attractions or hotels found matching "{regionSearchQuery}" in {selectedRegion.name}.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRegionSearchQuery('');
+                              setRegionSelectedCategory('all');
+                            }}
+                            className="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                          >
+                            Clear Search & Filters
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {filteredRegionLandmarks.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                onSelectLandmark(item);
+                                if (item.location && REGION_CITY_HEXAGONS[selectedRegion.id]?.some(c => c.name.toLowerCase() === item.location?.toLowerCase())) {
+                                  setFocusedCity(item.location);
+                                }
+                              }}
+                              className="w-full text-left p-2.5 rounded-lg border border-neutral-200/70 hover:border-amber-300 bg-white hover:bg-amber-50/40 transition-all flex items-start gap-2.5 cursor-pointer group shadow-2xs"
+                            >
+                              <div className="p-1.5 rounded-lg bg-neutral-50 border border-neutral-200/50 text-neutral-600 group-hover:bg-amber-100 group-hover:text-amber-800 transition-colors shrink-0">
+                                <span className="text-sm">{getCategoryTheme(item.category).emoji}</span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-bold text-xs text-neutral-800 group-hover:text-amber-700 transition-colors flex items-center justify-between gap-1">
+                                  <span className="truncate">{item.name}</span>
+                                  {item.rating !== undefined && (
+                                    <span className="shrink-0 text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
+                                      ★ {item.rating.toFixed(1)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-neutral-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                  <span className="uppercase text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded">
+                                    {item.category}
+                                  </span>
+                                  <span className="text-neutral-300">•</span>
+                                  <span>{item.visitDuration || '2 Hours'}</span>
+                                  {item.location && (
+                                    <>
+                                      <span className="text-neutral-300">•</span>
+                                      <span className="text-neutral-400 truncate">📍 {item.location}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add Custom Landmark Button */}
+                    {onAddCustomLandmark && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setFocusedClusterId(null);
-                          onSelectLandmark(null);
-                          setZoom(1);
-                          setPan({ x: 0, y: 0 });
-                        }}
-                        className="w-full py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all"
+                        onClick={openAddForm}
+                        className={`w-full py-2 px-4 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-white shadow-2xs transition-all hover:shadow-xs shrink-0 ${currentTheme.primaryBg}`}
                       >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        Back to Full Map
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Custom Lat/Long
                       </button>
                     )}
                   </div>
-                </div>
-
-                {/* BOTTOM CARD: Cluster spots list OR default "More Hotels" list */}
-                <div className="flex-1 min-h-0 bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm p-5 flex flex-col overflow-y-auto">
-                  {focusedCity ? (
-                    /* Show spots in the active focused city */
-                    <div>
-                      <div className="flex items-center justify-between mb-2.5">
-                        <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="text-base">🏨</span> Hotels in {focusedCity}
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFocusedCity(null);
-                            onSelectLandmark(null);
-                          }}
-                          className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded font-bold transition-all cursor-pointer border border-neutral-200 shadow-sm"
-                        >
-                          Clear Filter
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        {(() => {
-                          const cityItems = selectedRegion.landmarks.filter(l => 
-                            (l.location && l.location.toLowerCase() === focusedCity.toLowerCase()) || 
-                            l.name.toLowerCase().includes(focusedCity.toLowerCase()) ||
-                            focusedCity.toLowerCase().includes((l.location || '').toLowerCase())
-                          );
-                          
-                          if (cityItems.length > 0) {
-                            return cityItems.map(item => {
-                              const isCurrent = selectedLandmark?.id === item.id;
-                              return (
-                                <button
-                                  key={item.id}
-                                  type="button"
-                                  onClick={() => onSelectLandmark(item)}
-                                  className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2.5 cursor-pointer group ${
-                                    isCurrent
-                                      ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300'
-                                      : 'bg-neutral-50 hover:bg-neutral-100 border-neutral-200/60'
-                                  }`}
-                                >
-                                  <div className={`p-1 rounded-md shrink-0 ${
-                                    isCurrent ? 'bg-amber-100 text-amber-700' : 'bg-white text-neutral-500 border border-neutral-200/40'
-                                  }`}>
-                                    <span className="text-xs">{getCategoryTheme(item.category).emoji}</span>
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="font-bold text-[11px] text-neutral-800 group-hover:text-amber-700 transition-colors flex items-center justify-between gap-1">
-                                      <span className="truncate">{item.name}</span>
-                                      {item.rating !== undefined && (
-                                        <span className="shrink-0 text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
-                                          ★ {item.rating.toFixed(1)}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="text-[9px] text-neutral-500 mt-0.5 truncate">
-                                      {item.category.toUpperCase()} • {item.visitDuration || 'Overnight'}
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            });
-                          } else {
-                            return (
-                              <p className="text-[11px] text-neutral-400 italic">No hotels found in {focusedCity}.</p>
-                            );
-                          }
-                        })()}
-                      </div>
-                    </div>
-                  ) : focusedClusterId ? (
-                    /* Show spots in the active cluster */
-                    <div>
-                      <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <span className="text-base">🏨</span> Cluster Accommodation & Sights
-                      </h4>
-                      <div className="space-y-2">
-                        {(() => {
-                          const clusterItems = clusters.find(c => c.id === focusedClusterId)?.items || [];
-                          return clusterItems.map(item => {
-                            const isCurrent = selectedLandmark?.id === item.id;
-                            return (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => onSelectLandmark(item)}
-                                className={`w-full text-left p-2 rounded-lg border transition-all flex items-center gap-2.5 cursor-pointer group ${
-                                  isCurrent
-                                    ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300'
-                                    : 'bg-neutral-50 hover:bg-neutral-100 border-neutral-200/60'
-                                }`}
-                              >
-                                <div className={`p-1 rounded-md shrink-0 ${
-                                  isCurrent ? 'bg-amber-100 text-amber-700' : 'bg-white text-neutral-500 border border-neutral-200/40'
-                                }`}>
-                                  <span className="text-xs">{getCategoryTheme(item.category).emoji}</span>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="font-bold text-[11px] text-neutral-800 group-hover:text-amber-700 transition-colors flex items-center justify-between gap-1">
-                                    <span className="truncate">{item.name}</span>
-                                    {item.rating !== undefined && (
-                                      <span className="shrink-0 text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
-                                        ★ {item.rating.toFixed(1)}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-[9px] text-neutral-500 mt-0.5 truncate">
-                                    {item.category.toUpperCase()} • {item.visitDuration || '2 Hours'}
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Default Recommended Hotels */
-                    <div>
-                      <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <span className="text-base">🏨</span> More Hotels & Lodging
-                      </h4>
-                      <div className="space-y-2">
-                        {(() => {
-                          const currentRegionHotels = selectedRegion
-                            ? selectedRegion.landmarks.filter(l => l.category === 'hotel')
-                            : [];
-                          
-                          const otherRegionsHotels: Landmark[] = [];
-                          (regions || MYANMAR_REGIONS).forEach(r => {
-                            if (!selectedRegion || r.id !== selectedRegion.id) {
-                              r.landmarks.forEach(l => {
-                                if (l.category === 'hotel') {
-                                  otherRegionsHotels.push(l);
-                                }
-                              });
-                            }
-                          });
-
-                          const recommendedHotels = [...currentRegionHotels, ...otherRegionsHotels];
-
-                          if (recommendedHotels.length > 0) {
-                            return recommendedHotels.map(hotel => {
-                              const isCurrent = selectedLandmark?.id === hotel.id;
-                              const hotelRegion = (regions || MYANMAR_REGIONS).find(r => r.id === hotel.regionId);
-                              return (
-                                <button
-                                  key={hotel.id}
-                                  type="button"
-                                  onClick={() => {
-                                    onSelectLandmark(hotel);
-                                    if (hotelRegion && hotelRegion.id !== selectedRegion?.id) {
-                                      onSelectRegion(hotelRegion);
-                                    }
-                                  }}
-                                  className={`w-full text-left p-2.5 rounded-lg border transition-all flex items-start gap-2.5 cursor-pointer group ${
-                                    isCurrent
-                                      ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300'
-                                      : 'bg-neutral-50/50 hover:bg-neutral-50 border-neutral-200/60 hover:border-neutral-300'
-                                  }`}
-                                >
-                                  <div className={`p-1.5 rounded-lg shrink-0 ${
-                                    isCurrent ? 'bg-amber-100 text-amber-700' : 'bg-white text-neutral-500 border border-neutral-200/40 group-hover:text-amber-600'
-                                  }`}>
-                                    <span className="text-sm">🏨</span>
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="font-bold text-xs text-neutral-800 group-hover:text-amber-700 transition-colors flex items-center justify-between gap-1">
-                                      <span className="truncate">{hotel.name}</span>
-                                      {hotel.rating !== undefined && (
-                                        <span className="shrink-0 text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
-                                          ★ {hotel.rating.toFixed(1)}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="text-[10px] text-neutral-500 mt-0.5 flex items-center gap-1.5">
-                                      <span>📍 {hotelRegion?.name || 'Myanmar'}</span>
-                                      <span className="text-neutral-300">•</span>
-                                      <span>{hotel.visitDuration || 'Overnight'}</span>
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            });
-                          } else {
-                            return (
-                              <p className="text-[11px] text-neutral-400 italic">No hotels found in database.</p>
-                            );
-                          }
-                        })()}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* ================= NO LANDMARK SELECTED SLATE ================= */
-              <div id="no-landmark-selected-slate" className="p-6 bg-neutral-100/60 rounded-xl border border-dashed border-neutral-200 flex flex-col items-center justify-center text-center h-full gap-4 justify-between">
-                <div className="flex flex-col items-center justify-center my-auto">
-                  <Compass className="w-8 h-8 text-neutral-300 mb-2 animate-[spin_10s_linear_infinite]" />
-                  <h4 className="text-xs font-bold text-neutral-500 mb-1">No attraction clicked</h4>
-                  <p className="text-[11px] text-neutral-400 max-w-[200px]">
-                    Click on any icon pin on the map to show full attractions descriptions!
-                  </p>
-                </div>
-
-                {onAddCustomLandmark && (
-                  <button
-                    type="button"
-                    onClick={openAddForm}
-                    className={`w-full py-2 px-4 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-white shadow-sm transition-all hover:shadow-md ${currentTheme.primaryBg}`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Custom Lat/Long
-                  </button>
                 )}
               </div>
             )}
